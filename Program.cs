@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 // Controllers
-builder.Services.AddControllersWithViews()
+builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;//Aİ ile yaptım. JSON cycle diye bir hata olduğu için
@@ -23,15 +23,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
-// Session
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
-
+// (Removed Session configurations for Web API)
 
 // JWT 
 builder.Services.AddAuthentication(options =>
@@ -108,23 +100,20 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "E-Commerce API V1");
+    options.RoutePrefix = string.Empty; // Serves Swagger on the root URL
+    options.DocumentTitle = "E-Commerce API";
+    options.DefaultModelsExpandDepth(-1);
+    options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
+    options.DisplayRequestDuration();
+});
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
-}
-else
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "E-Commerce API V1");
-        options.RoutePrefix = "swagger";
-        options.DocumentTitle = "E-Commerce API";
-        options.DefaultModelsExpandDepth(-1);
-        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
-        options.DisplayRequestDuration();
-    });
 }
 
 app.UseHttpsRedirection();
@@ -133,13 +122,11 @@ app.UseRouting();
 
 app.UseCors("MobilePolicy");      
 
-app.UseSession();                 
+// (Removed app.UseSession())                 
 
 app.UseAuthentication();          
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapControllers();
 
 app.Run();
