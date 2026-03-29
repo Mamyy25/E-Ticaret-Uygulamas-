@@ -18,7 +18,7 @@
 
 
 
-Video link : https://drive.google.com/file/d/19EprhlEPoTraReOapaprtEZEJi6jbBwJ/view?usp=drive\_link
+**Video link :** https://drive.google.com/file/d/19EprhlEPoTraReOapaprtEZEJi6jbBwJ/view?usp=drive\_link
 
 
 
@@ -77,4 +77,42 @@ CORS entgrasyonu ve JWT Cycle hatası için ai kullandım.
 
 
 
+
+**2. Hafta**
+
+
+
+Video Link : https://drive.google.com/file/d/1XPzG3z-iZe9DgcHiBNG5k8W4Plw7ZzCM/view?usp=drive\_link
+
+
+
+Projenin klasör yapısını az çok oturttum. Controller dosyalarını yazma işlemini nerdeyse bitirdim. aynı şekilde Models klasörü içinde de entity'leri tanımladım. Swagger'ı kurdum ve program.cs dosyasında gerekli ayarlamaları yaptım. JWT üzerinde hala çalışıyorum. çok farklı bilmediğim hatalar aldım. Mesela projeyi web de açmaya çalıştığımda network error veriyordu bu sorunu Aİ ile çözdüm . appsettings.json dosyasında JWT token tanımladı , Sistem token üretmek veya okumak istiyor ancak C# appsettings.json dosyasında Jwt:Key adı verilen bir şifreleme anahtarı tanımlı olmadığından Anahtar boş (null) gelince API işlemi yapamayıp 500 kodunu döndürüyormuş.
+
+
+
+&#x09;1.ECommerce.Models :
+
+
+
+&#x09;	User,Cart,Product vb. entityleri tanımladım.
+
+
+
+&#x09;
+
+&#x09;2.ECommerce.Web :
+
+
+
+&#x09;	APİController mantığı üzere controller dosyalarımı yazma işlemini çoğunlukla bitirdim. Frontend yazmaya başladığımda ekleme veya güncelleme gerekli olursa bu klasörde 			değişiklik yapmaya devam edicem.
+
+
+
+&#x09;3.Arayüz
+
+&#x09;	
+
+&#x09;	React-Native için gerekli kaynak paketlerini indirip projede ECommerce.Mobile ve ECommerce.Frontend adında iki dosya oluşturdum bazı temel **.src** ve **.json** dosyalarını 			tanımladım.
+
+&#x09;	
 

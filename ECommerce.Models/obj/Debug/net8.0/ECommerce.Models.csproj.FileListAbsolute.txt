@@ -1,0 +1,23 @@
+C:\ECommerce\ECommerce.Models\bin\Debug\net8.0\ECommerce.Models.deps.json
+C:\ECommerce\ECommerce.Models\bin\Debug\net8.0\ECommerce.Models.dll
+C:\ECommerce\ECommerce.Models\bin\Debug\net8.0\ECommerce.Models.pdb
+C:\ECommerce\ECommerce.Models\obj\Debug\net8.0\ECommerce.Models.GeneratedMSBuildEditorConfig.editorconfig
+C:\ECommerce\ECommerce.Models\obj\Debug\net8.0\ECommerce.Models.AssemblyInfoInputs.cache
+C:\ECommerce\ECommerce.Models\obj\Debug\net8.0\ECommerce.Models.AssemblyInfo.cs
+C:\ECommerce\ECommerce.Models\obj\Debug\net8.0\ECommerce.Models.csproj.CoreCompileInputs.cache
+C:\ECommerce\ECommerce.Models\obj\Debug\net8.0\ECommerce.Models.dll
+C:\ECommerce\ECommerce.Models\obj\Debug\net8.0\refint\ECommerce.Models.dll
+C:\ECommerce\ECommerce.Models\obj\Debug\net8.0\ECommerce.Models.pdb
+C:\ECommerce\ECommerce.Models\obj\Debug\net8.0\ref\ECommerce.Models.dll
+C:\ECommerce\ECommerce.Models\obj\Debug\net8.0\ECommerce.Models.sourcelink.json
+C:\Users\ASUS\Desktop\Mobil taabanlı proje\ECommerce.Models\bin\Debug\net8.0\ECommerce.Models.deps.json
+C:\Users\ASUS\Desktop\Mobil taabanlı proje\ECommerce.Models\bin\Debug\net8.0\ECommerce.Models.dll
+C:\Users\ASUS\Desktop\Mobil taabanlı proje\ECommerce.Models\bin\Debug\net8.0\ECommerce.Models.pdb
+C:\Users\ASUS\Desktop\Mobil taabanlı proje\ECommerce.Models\obj\Debug\net8.0\ECommerce.Models.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ASUS\Desktop\Mobil taabanlı proje\ECommerce.Models\obj\Debug\net8.0\ECommerce.Models.AssemblyInfoInputs.cache
+C:\Users\ASUS\Desktop\Mobil taabanlı proje\ECommerce.Models\obj\Debug\net8.0\ECommerce.Models.AssemblyInfo.cs
+C:\Users\ASUS\Desktop\Mobil taabanlı proje\ECommerce.Models\obj\Debug\net8.0\ECommerce.Models.csproj.CoreCompileInputs.cache
+C:\Users\ASUS\Desktop\Mobil taabanlı proje\ECommerce.Models\obj\Debug\net8.0\ECommerce.Models.dll
+C:\Users\ASUS\Desktop\Mobil taabanlı proje\ECommerce.Models\obj\Debug\net8.0\refint\ECommerce.Models.dll
+C:\Users\ASUS\Desktop\Mobil taabanlı proje\ECommerce.Models\obj\Debug\net8.0\ECommerce.Models.pdb
+C:\Users\ASUS\Desktop\Mobil taabanlı proje\ECommerce.Models\obj\Debug\net8.0\ref\ECommerce.Models.dll
