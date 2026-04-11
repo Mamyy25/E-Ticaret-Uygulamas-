@@ -140,3 +140,52 @@ Projenin üçüncü haftasında, sistemin genel klasör yapısı tam anlamıyla 
 	
 	
 
+
+**4. Hafta**
+
+
+**Video Link :** https://drive.google.com/file/d/1TJkZDHdLJi_4Y2G26tJB7NtVfKa2yQFW/view?usp=drive_link
+
+
+
+Bu hafta mobil uygulamanın (ECommerce.Mobile) temel altyapısını tamamladım. Kullanıcı kimlik doğrulama, token yönetimi, navigasyon yapısı ve alıcıya yönelik temel ekranları (vitrin, sepet, siparişler, profil) içermektedir. Backend ile aynı API endpoint'lerini kullanarak mobil kısmını oluşturdum.
+
+Mobil klasörün genel yapısı şu şekildedir:
+
+	- src/context/AuthContext.js → Kimlik doğrulama ve JWT token yönetimi
+	- src/navigation/AppNavigator.js → Tab navigasyon yapısı ve auth flow yönlendirmesi
+	- src/screens/HomeScreen.js → Ürün kataloğu ve kategori filtreleme (Vitrin)
+	- src/screens/LoginScreen.js → Giriş ekranı
+	- src/screens/RegisterScreen.js → Kayıt ekranı (satıcı hesabı seçeneği dahil)
+	- src/screens/CartScreen.js → Sepet yönetimi ve sipariş oluşturma
+	- src/screens/OrdersScreen.js → Sipariş geçmişi ve detay görüntüleme
+	- src/screens/ProfileScreen.js → Kullanıcı profili ve çıkış işlemi
+	- src/theme/colors.js → Uygulama genelinde kullanılan renk paleti
+
+
+	1. Token Saklama (AsyncStorage) :
+
+	Dosya: AuthContext.js
+
+	Login'de → AsyncStorage.setItem('userToken', newToken) ile JWT kaydediliyor 
+	Uygulama açılışında → AsyncStorage.getItem('userToken') ile kaydedilmiş token okunuyor 
+	Logout'ta → AsyncStorage.removeItem('userToken') ile token siliniyor
+	Token decode edilerek isAdmin ve isSeller claim bilgileri çıkarılıyor. Axios header'ına Authorization: Bearer <token> otomatik ekleniyor.
+
+
+	2. React Navigation :
+
+	Dosya: AppNavigator.js
+
+	createBottomTabNavigator kullanılarak alt tab çubuğu oluşturuldu. Giriş yapmış kullanıcılar için 4 tab (AnaSayfa, Sepet, Siparişler, Profil), misafir kullanıcılar için 2 tab (AnaSayfa, Giriş Yap) tanımlandı.
+	createNativeStackNavigator bu aşamada kullanmadım.
+
+
+	3. Auth Flow (Otomatik Yönlendirme) :
+
+	Dosya: AppNavigator.js
+
+	Kullanıcı giriş yapmışsa → AuthenticatedTabs (AnaSayfa, Sepet, Siparişler, Profil) gösterilir.
+	Kullanıcı giriş yapmamışsa → GuestTabs (AnaSayfa, Giriş Yap) gösterilir.
+	
+
