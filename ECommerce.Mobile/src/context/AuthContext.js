@@ -10,11 +10,9 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fiziksel cihazlar ve aynı ağdaki telefonlar için bilgisayarın yerel IP adresi kullanılmalı.
-  // Android Emulator için 10.0.2.2, fiziksel cihaz için (ipconfig) 172.20.10.2
   const API_IP = '172.20.10.2';
   axios.defaults.baseURL = `http://${API_IP}:5133`;
-  axios.defaults.timeout = 10000; // 10 saniye zaman aşımı ekleyelim ki sonsuza dek dönmesin
+  axios.defaults.timeout = 10000;
 
   useEffect(() => {
     loadToken();
