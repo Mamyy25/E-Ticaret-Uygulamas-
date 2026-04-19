@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, SafeAreaView, Alert, ScrollView, Image } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, SafeAreaView, Alert, ScrollView, Image, TextInput } from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { colors } from '../theme/colors';
@@ -9,6 +9,7 @@ const ProductsScreen = ({ navigation, route }) => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(route?.params?.categoryId || null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const { isAuthenticated } = useContext(AuthContext);
 
@@ -22,21 +23,8 @@ const ProductsScreen = ({ navigation, route }) => {
         axios.get('/api/ProductsApi').catch(() => axios.get('/api/Products')),
         axios.get('/api/CategoriesApi').catch(() => axios.get('/api/Categories')),
       ]);
-      setAllProducts(prodRes.data);
-      setCategories(catRes.data);
-
-      // Eğer route'dan kategori geliyorsa filtrele
-      if (route?.params?.categoryId) {
-        const catId = route.params.categoryId;
-        try {
-          const { data } = await axios.get(`/api/ProductsApi/category/${catId}`);
-          setProducts(data);
-        } catch {
-          setProducts(prodRes.data.filter(p => (p.categoryId || p.CategoryId) === catId));
-        }
-      } else {
-        setProducts(prodRes.data);
-      }
+      setAllProducts(prodRes.data || []);
+      setCategories(catRes.data || []);
     } catch (error) {
       console.warn('Veri çekilemedi', error);
     } finally {
@@ -44,26 +32,39 @@ const ProductsScreen = ({ navigation, route }) => {
     }
   };
 
-  const handleCategoryFilter = async (categoryId) => {
-    if (categoryId === selectedCategory) {
-      setSelectedCategory(null);
-      setProducts(allProducts);
-      return;
+  useEffect(() => {
+    let filtered = allProducts;
+    
+    if (selectedCategory) {
+      filtered = filtered.filter(p => (p.categoryId || p.CategoryId) === selectedCategory);
     }
-    setSelectedCategory(categoryId);
-    try {
-      const { data } = await axios.get(`/api/ProductsApi/category/${categoryId}`).catch(() =>
-        axios.get(`/api/Products/category/${categoryId}`)
+    
+    if (searchQuery.trim() !== '') {
+      const lowerQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => 
+        (p.name || p.Name || '').toLowerCase().includes(lowerQuery) ||
+        (p.store?.name || p.store?.Name || '').toLowerCase().includes(lowerQuery) ||
+        (p.category?.name || p.category?.Name || '').toLowerCase().includes(lowerQuery)
       );
-      setProducts(data);
-    } catch {
-      setProducts(allProducts.filter(p => (p.categoryId || p.CategoryId) === categoryId));
     }
+    
+    setProducts(filtered);
+  }, [allProducts, selectedCategory, searchQuery]);
+
+  const handleCategoryFilter = (categoryId) => {
+    setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
   };
 
   const handleAddToCart = async (productId) => {
     if (!isAuthenticated) {
-      Alert.alert('Giriş Yapın', 'Sepete eklemek için önce oturum açmalısınız.');
+      Alert.alert(
+        'Üye Girişi Gerekli',
+        'Sepete ürün ekleyebilmek için giriş yapmalısınız.',
+        [
+          { text: 'İptal', style: 'cancel' },
+          { text: 'Giriş Yap', onPress: () => navigation.navigate('Login') }
+        ]
+      );
       return;
     }
     try {
@@ -116,6 +117,24 @@ const ProductsScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Arama Çubuğu */}
+      <View style={styles.searchContainer}>
+        <Text style={styles.searchIcon}>🔍</Text>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Ürün, kategori veya mağaza ara..."
+          placeholderTextColor={colors.textMuted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoCorrect={false}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearBtn}>
+            <Text style={styles.clearBtnText}>✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
       {/* Kategori Filtre Çubuğu */}
       {categories.length > 0 && (
         <View style={styles.filterBar}>
@@ -171,8 +190,30 @@ export default ProductsScreen;
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
-  filterBar: {
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.surface,
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
+    paddingHorizontal: 14,
+    height: 46,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchIcon: { fontSize: 18, marginRight: 8 },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+    height: '100%',
+  },
+  clearBtn: { padding: 4 },
+  clearBtnText: { color: colors.textMuted, fontSize: 16, fontWeight: 'bold' },
+  filterBar: {
+    backgroundColor: 'transparent',
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,

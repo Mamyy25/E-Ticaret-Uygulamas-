@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert } from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
@@ -9,10 +10,12 @@ const CartScreen = ({ navigation }) => {
   const [cart, setCart] = useState({ items: [], totalItems: 0, totalAmount: 0 });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (isAuthenticated) fetchCart();
-    else setLoading(false);
-  }, [isAuthenticated]);
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated) fetchCart();
+      else setLoading(false);
+    }, [isAuthenticated])
+  );
 
   const fetchCart = async () => {
     setLoading(true);
@@ -44,24 +47,7 @@ const CartScreen = ({ navigation }) => {
   };
 
   const placeOrder = () => {
-    Alert.prompt ? Alert.prompt('Teslimat Adresi', 'Siparişinizin gönderileceği adresi girin:', async (address) => {
-      if (!address) return;
-      try {
-        const { data } = await axios.post('/api/OrderApi', { shippingAddress: address });
-        Alert.alert('Başarılı 🎉', `Sipariş #${data.orderId} oluşturuldu!\nToplam: ₺${data.total}`);
-        fetchCart();
-      } catch (err) {
-        Alert.alert('Hata', err.response?.data?.message || 'Sipariş oluşturulamadı');
-      }
-    }) : (async () => {
-      try {
-        const { data } = await axios.post('/api/OrderApi', { shippingAddress: 'Mobil Adres' });
-        Alert.alert('Başarılı 🎉', `Sipariş #${data.orderId} oluşturuldu!`);
-        fetchCart();
-      } catch (err) {
-        Alert.alert('Hata', err.response?.data?.message || 'Sipariş oluşturulamadı');
-      }
-    })();
+    navigation.navigate('Checkout', { totalAmount: cart.totalAmount });
   };
 
   if (!isAuthenticated) {

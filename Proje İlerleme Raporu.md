@@ -189,3 +189,67 @@ Mobil klasörün genel yapısı şu şekildedir:
 	Kullanıcı giriş yapmamışsa → GuestTabs (AnaSayfa, Giriş Yap) gösterilir.
 	
 
+
+**5. Hafta**
+
+
+**Video Link :** https://drive.google.com/file/d/1X_U2pYelFtTSg0CfmrHvA0PudyAHau8Y/view?usp=drive_link
+
+
+Bu hafta çoğunlukla ürünler ile alakalı çalıştım. Ürün inceleme , filtreleme, ürünleri sepete ekleme vs gibi işlemleri tanımladım.
+
+	1. Yeni Siparişi Tamamla Ekranı Eklendi :
+	
+	Dosya: CheckoutScreen.js
+	
+	Alışveriş tamamlama sayfasını oluşturdum. Şehir, Ayrıntılı Adres, Kart Bilgisi, SKT ve CVV inputlarını ve API /OrderApi ile iletişimi sağladım.
+
+
+	2. Arama Fonksiyonu ve Lokal Filtreleme :
+	
+	Dosya: ProductsScreen.js
+	
+	Kullanıcının daha kolay ürün araması için anlık yerel çalışan bir filtreleme mantığı ve arayüz arama çubuğu ekledim.
+
+	
+	3. Sepet ve Siparişlerin Sekmeler Arası Otomatik Yenilenmesi
+	
+	Bu kısımda ürünleri görüntüleyebiliyor ve sepete ekleyebiliyordum fakat ürünleri sepette görüntülemeye çalıştığımda sepet boş gözüküyordu. Bu yüzden kodu biraz revize ettim. Bu kısımdaki sorunu çözerken Aİ kullandım.
+	
+	Dosyalar: CartScreen.js, OrdersScreen.js
+	
+	Alt menü sayfalarının hafızada tutulması nedeniyle yeni eklenen ürünleri göstermemesi sorununu çözdüm. Klasik useEffect yerine useFocusEffect mantığını ekledim.
+
+	
+	4. Kullanıcıları Giriş Yapmaya Yönlendirme :
+	
+	Dosyalar: ProductsScreen.js, ProductDetailScreen.js
+	
+	Kullanıcı giriş yapmadan "Sepete Ekle" butonuna bastığında uyarı yerine, direkt Login ekranına otomatik yönlendirme sağlayan yönlendirmeyi ekledim.
+
+
+	5. Fetch Data (API üzerinden GET isteği)
+
+	Bu kısımda API üzerinden GET isteği ile ürünleri çekme işlemini yaptım.
+
+	Dosya: ECommerce.Mobile/src/screens/ProductsScreen.js
+
+	Satır Numaraları: 20 - 33. satırlar arası (fetchData fonksiyonu)
+
+
+	6. FlatList Optimizasyonu
+	
+	Dosya: ECommerce.Mobile/src/screens/ProductsScreen.js
+
+	Satır Numaraları: 169 - 183. satırlar arası (Ekrandaki render edilen ana FlatList bileşeninin bulunduğu yer ve renderItem={renderProduct} .)
+
+
+	7. Ürün Kartları (UI Bileşeni)
+
+	Dosya: ECommerce.Mobile/src/screens/ProductsScreen.js
+
+	Satır Numaraları: 78 - 107. satırlar arası (const renderProduct = ({ item, index }) => (...) fonksiyonunun tamamı)
+
+	
+	
+

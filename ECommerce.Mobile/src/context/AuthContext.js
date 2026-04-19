@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const API_IP = '172.20.10.2';
+  const API_IP = '192.168.1.175';
   axios.defaults.baseURL = `http://${API_IP}:5133`;
   axios.defaults.timeout = 10000;
 

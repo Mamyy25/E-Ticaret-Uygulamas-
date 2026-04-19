@@ -10,6 +10,7 @@ import ProductDetailScreen from '../screens/ProductDetailScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import CartScreen from '../screens/CartScreen';
+import CheckoutScreen from '../screens/CheckoutScreen';
 import OrdersScreen from '../screens/OrdersScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
@@ -49,6 +50,28 @@ const HomeStack = () => (
   </Stack.Navigator>
 );
 
+const CartStack = () => (
+  <Stack.Navigator
+    screenOptions={{
+      headerStyle: { backgroundColor: colors.primary },
+      headerTintColor: colors.surface,
+      headerTitleStyle: { fontWeight: '700' },
+      headerBackTitle: 'Geri',
+    }}
+  >
+    <Stack.Screen 
+      name="CartMain" 
+      component={CartScreen} 
+      options={{ title: 'Sepetim' }}
+    />
+    <Stack.Screen 
+      name="Checkout" 
+      component={CheckoutScreen} 
+      options={{ title: 'Ödemeyi Tamamla' }}
+    />
+  </Stack.Navigator>
+);
+
 const AuthenticatedTabs = () => (
   <Tab.Navigator
     screenOptions={({ route }) => ({
@@ -76,7 +99,7 @@ const AuthenticatedTabs = () => (
     })}
   >
     <Tab.Screen name="AnaSayfa" component={HomeStack} options={{ title: 'Vitrin' }} />
-    <Tab.Screen name="Sepet" component={CartScreen} options={{ title: 'Sepetim', headerShown: true, headerStyle: { backgroundColor: colors.primary }, headerTintColor: colors.surface }} />
+    <Tab.Screen name="Sepet" component={CartStack} options={{ title: 'Sepetim', headerShown: false }} />
     <Tab.Screen name="Siparisler" component={OrdersScreen} options={{ title: 'Siparişlerim', headerShown: true, headerStyle: { backgroundColor: colors.primary }, headerTintColor: colors.surface }} />
     <Tab.Screen name="Profil" component={ProfileScreen} options={{ title: 'Hesabım', headerShown: true, headerStyle: { backgroundColor: colors.primary }, headerTintColor: colors.surface }} />
   </Tab.Navigator>

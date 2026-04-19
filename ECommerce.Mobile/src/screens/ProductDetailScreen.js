@@ -10,7 +10,14 @@ const ProductDetailScreen = ({ route, navigation }) => {
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
-      Alert.alert('Giriş Yapın', 'Sepete eklemek için lütfen giriş yapın.');
+      Alert.alert(
+        'Üye Girişi Gerekli',
+        'Sepete eklemek için lütfen giriş yapın.',
+        [
+          { text: 'İptal', style: 'cancel' },
+          { text: 'Giriş Yap', onPress: () => navigation.navigate('Login') }
+        ]
+      );
       return;
     }
     try {

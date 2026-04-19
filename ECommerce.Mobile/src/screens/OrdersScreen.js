@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView } from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
@@ -10,10 +11,12 @@ const OrdersScreen = () => {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
 
-  useEffect(() => {
-    if (isAuthenticated) fetchOrders();
-    else setLoading(false);
-  }, [isAuthenticated]);
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated) fetchOrders();
+      else setLoading(false);
+    }, [isAuthenticated])
+  );
 
   const fetchOrders = async () => {
     try {
