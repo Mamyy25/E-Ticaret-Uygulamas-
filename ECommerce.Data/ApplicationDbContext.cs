@@ -19,6 +19,9 @@ namespace ECommerce.Data
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Store> Stores { get; set; }
         public DbSet<StoreCategory> StoreCategories { get; set; }
+        public DbSet<Review> Reviews { get; set; }
+        public DbSet<Appointment> Appointments { get; set; }
+        public DbSet<Message> Messages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -67,6 +70,55 @@ namespace ECommerce.Data
                 .HasForeignKey<Cart>(c => c.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Yeni Modeller İlişkileri
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Receiver)
+                .WithMany()
+                .HasForeignKey(m => m.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.Customer)
+                .WithMany()
+                .HasForeignKey(a => a.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.Store)
+                .WithMany(s => s.Appointments)
+                .HasForeignKey(a => a.StoreId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.Product)
+                .WithMany(p => p.Appointments)
+                .HasForeignKey(a => a.ProductId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Product)
+                .WithMany(p => p.Reviews)
+                .HasForeignKey(r => r.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Store)
+                .WithMany(s => s.Reviews)
+                .HasForeignKey(r => r.StoreId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Seed Data - Kategoriler
             modelBuilder.Entity<Category>().HasData(
                 new Category { Id = 1, Name = "Elektronik", Description = "Elektronik ürünler" },
@@ -74,15 +126,8 @@ namespace ECommerce.Data
                 new Category { Id = 3, Name = "Kitap", Description = "Kitaplar" },
                 new Category { Id = 4, Name = "Ev & Yaşam", Description = "Ev eşyaları" }
             );
-
-            // Seed Data - Test Ürünleri
-            modelBuilder.Entity<Product>().HasData(
-                new Product { Id = 1, Name = "Laptop", Description = "15.6 inch ekran, 16GB RAM", Price = 15000, Stock = 10, CategoryId = 1, IsActive = true },
-                new Product { Id = 2, Name = "Wireless Mouse", Description = "Kablosuz optik mouse", Price = 250, Stock = 50, CategoryId = 1, IsActive = true },
-                new Product { Id = 3, Name = "T-Shirt", Description = "Pamuklu tişört", Price = 150, Stock = 100, CategoryId = 2, IsActive = true },
-                new Product { Id = 4, Name = "Roman Kitabı", Description = "Bestseller roman", Price = 75, Stock = 30, CategoryId = 3, IsActive = true }
-            );
         }
+
 
         public override int SaveChanges()
         {

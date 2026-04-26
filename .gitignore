@@ -97,3 +97,6 @@ yarn-error.log
 # Backup files
 *.bak
 *.backup
+
+# MS Word temporary lock files
+~$*

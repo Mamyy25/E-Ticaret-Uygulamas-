@@ -39,6 +39,7 @@ namespace ECommerce.Models
         public bool IsActive { get; set; } = true;
         public bool IsDeleted { get; set; } = false;
         public bool IsFeatured { get; set; } = false;
+        public bool IsService { get; set; } = false; // "True" ise bu bir randevulu hizmettir.
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
         
@@ -55,5 +56,7 @@ namespace ECommerce.Models
         // Başlangıç koleksiyonları ekledim -> ThenInclude/nullability uyarılarını azaltır
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
         public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
+        public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     }
 }

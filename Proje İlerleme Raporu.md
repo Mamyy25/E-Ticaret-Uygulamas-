@@ -250,6 +250,60 @@ Bu hafta çoğunlukla ürünler ile alakalı çalıştım. Ürün inceleme , fil
 
 	Satır Numaraları: 78 - 107. satırlar arası (const renderProduct = ({ item, index }) => (...) fonksiyonunun tamamı)
 
-	
-	
+**6. Hafta**
+
+**Video Link :** [Hazırlanıyor]
+
+Bu hafta ürün detayı ve filtreleme işlemlerinin yanı sıra daha gerçekçi testler yapmak için mock verileri veritabanında sildim. Artık testleri hesaplar arasında geçiş yaparak kendim oluşturuyorum. Bunun yanı sıra UI üzerine bazı değişiklikler (Ürün detayı kısmında ürün yorumları vs kısmını ekledim) yaptım.İşin frontend ve tasarım kısmında AI desteği aldım. Komple yaptırmak yerine yapmak istediklerimi AI'a sorarak ilerledim.
+
+
+	1. Veritabanı Temizliği:
+	Sistemdeki tüm test ürünleri (Laptop, Wireless Mouse vb.) temizledim. Artık sistem sadece satıcıların oluşturduğu gerçek ürünlerle çalışıyor.
+	- **Dosya:** ApplicationDbContext.cs 
+	- **Yapılan işlem:** OnModelCreating içindeki Seed Data blokları sildim. Bu sayede artık kendim ürün ekleyebiliyor ve bu ürünleri kullanıcı hesabı ile test edebiliyorum.
+
+
+	2. Dynamic Routing :
+	Herhangi bir ürüne veya mağazaya tıklandığında, ID üzerinden detay sayfasına gidilmesi ve o nesneye özel verinin backend'den gelmesi.
+	- **Dosyalar:** HomeScreen.js
+	- **İşlev:** navigate('/product/${id}') yapısı ile dinamik productId üzerinden axios.get('/api/ProductsApi/${id}') çağrısı yapılarak özel veri fetch ediliyor.
+
+
+	3. Filtreleme :
+	Kategorilere göre ürünlerin filtrelenmesi işlemi, yerel filtrelemeden tamamen backend destekli olarak değiştirdim
+	- **Dosyalar:** ProductsApiController.cs, Home.jsx
+	- **İşlev:** Kullanıcı bir kategori seçtiğinde API'ye '/api/ProductsApi/category/{id}' isteği gönderilerek sadece o kategoriye ait güncel verilerin gelmesi.
+
+
+	4. Navigasyon :
+	Sistem navigasyonunu kullanıcı rolüne göre ayırdım. Artık satıcılar normal kullanıcı vitrinini görmeden direkt kendi yönetim panellerine yönlendiriliyor.
+
+
+
+**7. Hafta**
+
+**Video Link :** [Hazırlanıyor]
+
+Bu hafta rapora kıyasla çoğunlukla bu zamana kadar yaptıklarımı artık UI olarak iyileştirdim. Sepet yönetimi işlemlerini önceki haftalarda az çok tanımlamıştım gerek controller gerekse APİ olarak. Bu yüzden bu hafta daha çok kullanıcı deneyimi üzerine değişiklikler yaptım.6. Haftayla benzer şekilde bu hafta işin Tasarım/Frontend kısmında Aİ kullandım. bazı özellikleri direkt ordan kopyaladım örneğin bazı ikonlar, butonlar vs.
+
+
+	1. Sepet Yönetimi:
+	Uygulamanın her köşesinden erişilebilen merkezi bir sepet sistemi ekledim.
+	- **Dosyalar:** CartContext.js 
+	- **Yapılan işlem:** Sepet verisi Context API ile fonksiyonlar ile iletişim kuruyor. addToCart, removeFromCart ve clearCart fonksiyonları bu merkezden yönetiliyor.
+
+
+	2. Sepet İşlemleri:
+	Sepete ürün ekleme, miktar güncelleme ve ürün silme işlemlerini tanımladım. Uygulama kapandığında sepetin silinmemesi için yerel depolama kullandım.
+	- **Dosya:** CartContext.js
+	- **Persistence:** AsyncStorage üzerinden sepet verisi her değişiklikte senkronize oluyor.
+
+
+	3. UI İyileştirmeleri:
+	- **Dosyalar:** HomeScreen.js
+	- **İşlev:** Alıcılar en üstteki Dashboard'da son siparişlerini ve mesajlarını özet şeklinde görebiliyor.
+
+
+	4. Bilinmeyen İletişim Hatası
+	Mobil testlerdeki iletişim hatalarını (Axios Timeout) çözmek için otomatik IP tespiti yaptım. Bunun yanı sıra react-native-safe-area-context kullanmaya başladım. Bu hatayı çözerken Aİ kullandım.
 

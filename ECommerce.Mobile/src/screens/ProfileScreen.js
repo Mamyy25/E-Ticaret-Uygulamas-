@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { colors } from '../theme/colors';
 
 const ProfileScreen = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, userMode, setUserMode } = useContext(AuthContext);
 
   const handleLogout = () => {
     logout();
@@ -19,10 +19,24 @@ const ProfileScreen = () => {
           </Text>
         </View>
         <Text style={styles.userName}>{user?.name || user?.sub || 'Kullanıcı'}</Text>
-        <Text style={styles.userRole}>{user?.isAdmin ? '🛡️ Yönetici (Admin)' : 'Müşteri'}</Text>
+        <Text style={styles.userRole}>
+          {user?.isAdmin ? '🛡️ Yönetici (Admin)' : user?.isSeller ? (userMode === 'seller' ? '🏪 Mağaza Yönetimi Modu' : '🛒 Platform (Alışveriş) Modu') : 'Müşteri'}
+        </Text>
       </View>
 
       <View style={styles.content}>
+        {/* Satıcı Mod Değiştirme */}
+        {user?.isSeller && userMode && (
+          <TouchableOpacity 
+            style={[styles.adminBtn, { backgroundColor: userMode === 'seller' ? 'rgba(34,197,94,0.1)' : 'rgba(99,102,241,0.1)', marginBottom: 24, borderWidth: 1, borderColor: userMode === 'seller' ? 'rgba(34,197,94,0.3)' : 'rgba(99,102,241,0.3)', borderRadius: 16, padding: 20 }]} 
+            onPress={() => setUserMode(userMode === 'seller' ? 'buyer' : 'seller')}
+          >
+            <Text style={{ fontSize: 16, fontWeight: '700', color: userMode === 'seller' ? '#16a34a' : '#4F46E5', textAlign: 'center' }}>
+              {userMode === 'seller' ? '🛒 Platforma (Alışverişe) Geç' : '🏪 Mağazama Geç'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {user?.isAdmin && (
           <View style={styles.adminBox}>
             <Text style={styles.adminTitle}>Yönetim Paneli İşlemleri</Text>

@@ -23,6 +23,13 @@ namespace ECommerce.Models
         [StringLength(500)]
         public string? BannerImageUrl { get; set; }
 
+        public string StoreType { get; set; } = "Physical"; // "Physical" veya "Service"
+
+        public int? YearsOfExperience { get; set; }
+
+        [StringLength(500)]
+        public string? DiplomaUrl { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
@@ -32,5 +39,7 @@ namespace ECommerce.Models
 
         public ICollection<StoreCategory> StoreCategories { get; set; } = new List<StoreCategory>();
         public ICollection<Product> Products { get; set; } = new List<Product>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
+        public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     }
 }

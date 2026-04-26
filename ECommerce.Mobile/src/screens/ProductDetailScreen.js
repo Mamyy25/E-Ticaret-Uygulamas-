@@ -6,7 +6,10 @@ import axios from 'axios';
 
 const ProductDetailScreen = ({ route, navigation }) => {
   const { product } = route.params;
-  const { isAuthenticated } = useContext(AuthContext);
+  const { user, isAuthenticated } = useContext(AuthContext);
+
+  const isStoreOwnerOrAdmin = user?.isAdmin || user?.isSeller;
+  const isService = product.isService === true;
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -76,10 +79,18 @@ const ProductDetailScreen = ({ route, navigation }) => {
           {/* Satıcı Bilgisi */}
           {storeName && (
             <View style={styles.storeBox}>
-              <View>
-                <Text style={styles.storeLabel}>Satıcı</Text>
+              <View style={{flex: 1}}>
+                <Text style={styles.storeLabel}>Satıcı / Hizmet Veren</Text>
                 <Text style={styles.storeName}>🛍 {storeName}</Text>
               </View>
+              {product.store?.sellerId && product.store?.sellerId !== user?.id && (
+                <TouchableOpacity 
+                  style={styles.messageBtn} 
+                  onPress={() => navigation.navigate('Chat', { targetUserId: product.store.sellerId, targetUserName: storeName })}
+                >
+                  <Text style={styles.messageBtnText}>💬 Mesaj Gönder</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
 
@@ -91,19 +102,21 @@ const ProductDetailScreen = ({ route, navigation }) => {
         </View>
       </ScrollView>
 
-      {/* Alt Sabit Buton */}
+      {/* Alt Sabit Buton - Herkese (Müşteri ve B2B) Açık */}
       <View style={styles.bottomBar}>
         <View>
-          <Text style={styles.bottomLabel}>Toplam</Text>
+          <Text style={styles.bottomLabel}>{isService ? 'Hizmet Bedeli' : 'Toplam'}</Text>
           <Text style={styles.bottomPrice}>₺{price.toLocaleString()}</Text>
         </View>
         <TouchableOpacity
-          style={[styles.cartBtn, stock <= 0 && styles.cartBtnDisabled]}
+          style={[styles.cartBtn, (!isService && stock <= 0) && styles.cartBtnDisabled]}
           onPress={handleAddToCart}
-          disabled={stock <= 0}
+          disabled={!isService && stock <= 0}
           activeOpacity={0.8}
         >
-          <Text style={styles.cartBtnText}>{stock > 0 ? '🛒  Sepete Ekle' : 'Tükendi'}</Text>
+          <Text style={styles.cartBtnText}>
+            {isService ? '📅 Randevu Al' : (stock > 0 ? '🛒  Sepete Ekle' : 'Tükendi')}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -190,6 +203,8 @@ const styles = StyleSheet.create({
   },
 
   storeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#f8fafc',
     padding: 16,
     borderRadius: 12,
@@ -206,9 +221,22 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   storeName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '800',
     color: colors.text,
+  },
+  messageBtn: {
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.3)',
+  },
+  messageBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#4F46E5',
   },
 
   descBox: {

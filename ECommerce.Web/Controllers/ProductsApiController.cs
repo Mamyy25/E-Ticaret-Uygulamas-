@@ -43,8 +43,9 @@ namespace ECommerce.Web.Controllers
                 p.ImageUrl,
                 p.Keywords,
                 p.IsFeatured,
+                p.IsService,
                 Category = new { p.Category.Id, p.Category.Name },
-                Store = p.Store != null ? new { p.Store.Id, p.Store.Name } : null,
+                Store = p.Store != null ? new { p.Store.Id, p.Store.Name, p.Store.SellerId } : null,
                 StoreCategory = p.StoreCategory != null ? new { p.StoreCategory.Id, p.StoreCategory.Name } : null
             }).ToListAsync();
 
@@ -71,10 +72,11 @@ namespace ECommerce.Web.Controllers
                 p.ImageUrl,
                 p.Keywords,
                 p.IsFeatured,
+                p.IsService,
                 p.CategoryId,
                 p.StoreCategoryId,
                 Category = new { p.Category.Id, p.Category.Name },
-                Store = p.Store != null ? new { p.Store.Id, p.Store.Name } : null,
+                Store = p.Store != null ? new { p.Store.Id, p.Store.Name, p.Store.SellerId } : null,
                 StoreCategory = p.StoreCategory != null ? new { p.StoreCategory.Id, p.StoreCategory.Name } : null
             });
         }
@@ -87,9 +89,9 @@ namespace ECommerce.Web.Controllers
                 .Include(p => p.Category)
                 .Include(p => p.Store)
                 .Select(p => new {
-                    p.Id, p.Name, p.Description, p.Price, p.ImageUrl,
+                    p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.IsService,
                     Category = new { p.Category.Id, p.Category.Name },
-                    Store = p.Store != null ? new { p.Store.Id, p.Store.Name } : null
+                    Store = p.Store != null ? new { p.Store.Id, p.Store.Name, p.Store.SellerId } : null
                 })
                 .ToListAsync();
 
@@ -111,9 +113,9 @@ namespace ECommerce.Web.Controllers
                 .Include(p => p.Category)
                 .Include(p => p.Store)
                 .Select(p => new {
-                    p.Id, p.Name, p.Description, p.Price, p.ImageUrl,
+                    p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.IsService,
                     Category = new { p.Category.Id, p.Category.Name },
-                    Store = p.Store != null ? new { p.Store.Id, p.Store.Name } : null
+                    Store = p.Store != null ? new { p.Store.Id, p.Store.Name, p.Store.SellerId } : null
                 })
                 .ToListAsync();
 
@@ -234,9 +236,9 @@ namespace ECommerce.Web.Controllers
                 .GroupBy(p => p.Id).Select(g => g.First())
                 .Take(12)
                 .Select(p => new {
-                    p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.IsFeatured,
+                    p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.IsFeatured, p.IsService,
                     Category = new { p.Category.Id, p.Category.Name },
-                    Store = p.Store != null ? new { p.Store.Id, p.Store.Name } : null
+                    Store = p.Store != null ? new { p.Store.Id, p.Store.Name, p.Store.SellerId } : null
                 });
 
             return Ok(combined);

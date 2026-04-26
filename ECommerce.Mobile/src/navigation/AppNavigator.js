@@ -13,6 +13,11 @@ import CartScreen from '../screens/CartScreen';
 import CheckoutScreen from '../screens/CheckoutScreen';
 import OrdersScreen from '../screens/OrdersScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import StoreProfileScreen from '../screens/StoreProfileScreen';
+import MessagesListScreen from '../screens/MessagesListScreen';
+import ChatScreen from '../screens/ChatScreen';
+import GatewayScreen from '../screens/GatewayScreen';
+import AdminDashboardScreen from '../screens/AdminDashboardScreen';
 
 import { colors } from '../theme/colors';
 import { AuthContext } from '../context/AuthContext';
@@ -72,7 +77,28 @@ const CartStack = () => (
   </Stack.Navigator>
 );
 
-const AuthenticatedTabs = () => (
+const MessageStack = () => (
+  <Stack.Navigator
+    screenOptions={{
+      headerStyle: { backgroundColor: colors.primary },
+      headerTintColor: colors.surface,
+      headerTitleStyle: { fontWeight: '700' },
+      headerBackTitle: 'Geri',
+    }}
+  >
+    <Stack.Screen 
+      name="MessagesList" 
+      component={MessagesListScreen} 
+      options={{ title: 'Sohbetler' }}
+    />
+    <Stack.Screen 
+      name="Chat" 
+      component={ChatScreen} 
+    />
+  </Stack.Navigator>
+);
+
+const BuyerTabs = () => (
   <Tab.Navigator
     screenOptions={({ route }) => ({
       headerShown: false,
@@ -92,6 +118,7 @@ const AuthenticatedTabs = () => (
       tabBarIcon: ({ focused }) => {
         let icon = '🏠';
         if (route.name === 'Sepet') icon = '🛒';
+        else if (route.name === 'Mesajlar') icon = '✉️';
         else if (route.name === 'Siparisler') icon = '📋';
         else if (route.name === 'Profil') icon = '👤';
         return <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>{icon}</Text>;
@@ -99,11 +126,50 @@ const AuthenticatedTabs = () => (
     })}
   >
     <Tab.Screen name="AnaSayfa" component={HomeStack} options={{ title: 'Vitrin' }} />
-    <Tab.Screen name="Sepet" component={CartStack} options={{ title: 'Sepetim', headerShown: false }} />
+    <Tab.Screen name="Sepet" component={CartStack} options={{ title: 'Sepetim' }} />
+    <Tab.Screen name="Mesajlar" component={MessageStack} options={{ title: 'Mesajlar' }} />
     <Tab.Screen name="Siparisler" component={OrdersScreen} options={{ title: 'Siparişlerim', headerShown: true, headerStyle: { backgroundColor: colors.primary }, headerTintColor: colors.surface }} />
     <Tab.Screen name="Profil" component={ProfileScreen} options={{ title: 'Hesabım', headerShown: true, headerStyle: { backgroundColor: colors.primary }, headerTintColor: colors.surface }} />
   </Tab.Navigator>
 );
+
+const SellerTabs = () => (
+  <Tab.Navigator
+    screenOptions={({ route }) => ({
+      headerShown: false,
+      tabBarActiveTintColor: colors.accentDark,
+      tabBarInactiveTintColor: colors.textMuted,
+      tabBarStyle: { 
+        backgroundColor: colors.surface, 
+        borderTopColor: colors.border,
+        height: 60,
+        paddingBottom: 8,
+        paddingTop: 4,
+      },
+      tabBarLabelStyle: {
+        fontSize: 11,
+        fontWeight: '700',
+      },
+      tabBarIcon: ({ focused }) => {
+        let icon = '📊';
+        if (route.name === 'Magazam') icon = '🏪';
+        else if (route.name === 'Mesajlar') icon = '✉️';
+        else if (route.name === 'Siparisler') icon = '📋';
+        else if (route.name === 'Vitrin') icon = '🛒';
+        else if (route.name === 'Profil') icon = '👤';
+        return <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>{icon}</Text>;
+      },
+    })}
+  >
+    <Tab.Screen name="Magazam" component={StoreProfileScreen} options={{ title: 'Panel' }} />
+    <Tab.Screen name="Vitrin" component={HomeStack} options={{ title: 'Platform' }} />
+    <Tab.Screen name="Mesajlar" component={MessageStack} options={{ title: 'Sohbetler' }} />
+    <Tab.Screen name="Siparisler" component={OrdersScreen} options={{ title: 'İşlemler', headerShown: true, headerStyle: { backgroundColor: colors.primary }, headerTintColor: colors.surface }} />
+    <Tab.Screen name="Profil" component={ProfileScreen} options={{ title: 'Hesabım', headerShown: true, headerStyle: { backgroundColor: colors.primary }, headerTintColor: colors.surface }} />
+  </Tab.Navigator>
+);
+
+
 
 // Guest tab'ı içinde de aynı HomeStack kullanılır
 const GuestHomeStack = () => (
@@ -175,14 +241,47 @@ const GuestTabs = () => (
   </Tab.Navigator>
 );
 
+const AdminTabs = () => (
+    <Tab.Navigator
+        screenOptions={{
+            headerShown: true,
+            headerStyle: { backgroundColor: colors.primary },
+            headerTintColor: colors.surface,
+            tabBarActiveTintColor: colors.primary,
+            tabBarIcon: () => <Text style={{ fontSize: 22 }}>🛡️</Text>
+        }}
+    >
+        <Tab.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ title: 'Denetim Masası' }} />
+        <Tab.Screen name="AdminMessages" component={MessageStack} options={{ title: 'Destek/Mesaj', tabBarIcon: () => <Text style={{ fontSize: 22 }}>✉️</Text> }} />
+    </Tab.Navigator>
+);
+
 const AppNavigator = () => {
-  const { isAuthenticated, loading } = useContext(AuthContext);
+  const { user, isAuthenticated, loading, userMode } = useContext(AuthContext);
 
   if (loading) return null;
 
+  // Satıcı giriş yaptı ama mod seçmedi
+  const needsGateway = isAuthenticated && user?.isSeller && !userMode && !user?.isAdmin;
+  // Satıcı "seller" modundaysa
+  const isSellerMode = isAuthenticated && user?.isSeller && userMode === 'seller' && !user?.isAdmin;
+  // Admin ise
+  const isAdmin = isAuthenticated && user?.isAdmin;
+
   return (
     <NavigationContainer>
-      {isAuthenticated ? <AuthenticatedTabs /> : <GuestTabs />}
+      {!isAuthenticated 
+        ? <GuestTabs />
+        : isAdmin
+            ? <AdminTabs />
+            : needsGateway
+              ? <Stack.Navigator screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="Gateway" component={GatewayScreen} />
+                </Stack.Navigator>
+              : isSellerMode
+                ? <SellerTabs />
+                : <BuyerTabs />
+      }
     </NavigationContainer>
   );
 };

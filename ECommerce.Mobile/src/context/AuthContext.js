@@ -8,11 +8,23 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [userMode, setUserModeState] = useState(null); // 'buyer' | 'seller' | null
   const [loading, setLoading] = useState(true);
 
-  const API_IP = '192.168.1.175';
+  const API_IP = '172.20.10.2'; // Hotspot IP Adresiniz (Otomatik tespit edildi)
+
   axios.defaults.baseURL = `http://${API_IP}:5133`;
-  axios.defaults.timeout = 10000;
+  axios.defaults.timeout = 15000;
+
+
+  const setUserMode = async (mode) => {
+    setUserModeState(mode);
+    if (mode) {
+      await AsyncStorage.setItem('userMode', mode);
+    } else {
+      await AsyncStorage.removeItem('userMode');
+    }
+  };
 
   useEffect(() => {
     loadToken();
@@ -21,8 +33,12 @@ export const AuthProvider = ({ children }) => {
   const loadToken = async () => {
     try {
       const storedToken = await AsyncStorage.getItem('userToken');
+      const storedMode = await AsyncStorage.getItem('userMode');
       if (storedToken) {
         authenticate(storedToken);
+      }
+      if (storedMode) {
+        setUserModeState(storedMode);
       }
     } catch (e) {
       console.warn('Guvensiz AsyncStorage erisimi:', e);
@@ -71,8 +87,10 @@ export const AuthProvider = ({ children }) => {
       }
       return false;
     } catch (e) {
-      throw new Error(e.response?.data?.message || 'Bilinmeyen bir iletisim hatasi.');
+      const errorMsg = e.response?.data?.message || e.message || 'Bilinmeyen bir iletişim hatası.';
+      throw new Error(`${errorMsg} (Bağlanılan adres: ${axios.defaults.baseURL})`);
     }
+
   };
 
   const register = async (fullName, email, password, confirmPassword, isSeller) => {
@@ -86,13 +104,15 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     await AsyncStorage.removeItem('userToken');
+    await AsyncStorage.removeItem('userMode');
     setToken(null);
     setUser(null);
+    setUserModeState(null);
     delete axios.defaults.headers.common['Authorization'];
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, userMode, setUserMode, isAuthenticated: !!user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
