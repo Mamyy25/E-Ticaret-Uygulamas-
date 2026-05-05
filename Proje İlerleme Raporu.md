@@ -252,7 +252,7 @@ Bu hafta çoğunlukla ürünler ile alakalı çalıştım. Ürün inceleme , fil
 
 **6. Hafta**
 
-**Video Link :** [Hazırlanıyor]
+**Video Link :** https://drive.google.com/file/d/13Wg7qMAWqLbvpvUVhFIqgt6kgh_1CdO4/view?usp=drive_link
 
 Bu hafta ürün detayı ve filtreleme işlemlerinin yanı sıra daha gerçekçi testler yapmak için mock verileri veritabanında sildim. Artık testleri hesaplar arasında geçiş yaparak kendim oluşturuyorum. Bunun yanı sıra UI üzerine bazı değişiklikler (Ürün detayı kısmında ürün yorumları vs kısmını ekledim) yaptım.İşin frontend ve tasarım kısmında AI desteği aldım. Komple yaptırmak yerine yapmak istediklerimi AI'a sorarak ilerledim.
 
@@ -282,7 +282,7 @@ Bu hafta ürün detayı ve filtreleme işlemlerinin yanı sıra daha gerçekçi 
 
 **7. Hafta**
 
-**Video Link :** [Hazırlanıyor]
+**Video Link :** https://drive.google.com/file/d/1bY0AZiYBZbwkNvUOslMKo3U1rL7Mf6PS/view?usp=drive_link
 
 Bu hafta rapora kıyasla çoğunlukla bu zamana kadar yaptıklarımı artık UI olarak iyileştirdim. Sepet yönetimi işlemlerini önceki haftalarda az çok tanımlamıştım gerek controller gerekse APİ olarak. Bu yüzden bu hafta daha çok kullanıcı deneyimi üzerine değişiklikler yaptım.6. Haftayla benzer şekilde bu hafta işin Tasarım/Frontend kısmında Aİ kullandım. bazı özellikleri direkt ordan kopyaladım örneğin bazı ikonlar, butonlar vs.
 
