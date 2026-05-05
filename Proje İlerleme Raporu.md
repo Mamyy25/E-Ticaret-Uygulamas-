@@ -289,13 +289,11 @@ Bu hafta rapora kıyasla çoğunlukla bu zamana kadar yaptıklarımı artık UI 
 
 	1. Sepet Yönetimi:
 	Uygulamanın her köşesinden erişilebilen merkezi bir sepet sistemi ekledim.
-	- **Dosyalar:** CartContext.js 
 	- **Yapılan işlem:** Sepet verisi Context API ile fonksiyonlar ile iletişim kuruyor. addToCart, removeFromCart ve clearCart fonksiyonları bu merkezden yönetiliyor.
 
 
 	2. Sepet İşlemleri:
 	Sepete ürün ekleme, miktar güncelleme ve ürün silme işlemlerini tanımladım. Uygulama kapandığında sepetin silinmemesi için yerel depolama kullandım.
-	- **Dosya:** CartContext.js
 	- **Persistence:** AsyncStorage üzerinden sepet verisi her değişiklikte senkronize oluyor.
 
 
