@@ -6,7 +6,7 @@
 
 
 
-**videolar için drive linki : https://drive.google.com/drive/folders/1xHJX2zLOXAiEZ4TMt8UAstsQ5mY\_mhbE?usp=drive\_link**
+**videolar için drive linki : https://drive.google.com/drive/folders/1xHJX2zLOXAiEZ4TMt8UAstsQ5mY_mhbE?usp=drive_link**
 
 
 
