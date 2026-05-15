@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ECommerce.Models;
+using ECommerce.Models.Enums;
 
 namespace ECommerce.Data
 {
@@ -22,6 +23,20 @@ namespace ECommerce.Data
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<ServicePackage> ServicePackages { get; set; }
+        public DbSet<WorkArea> WorkAreas { get; set; }
+        public DbSet<CustomerRequest> CustomerRequests { get; set; }
+        public DbSet<RequestOffer> RequestOffers { get; set; }
+
+        // ─── Faz 3: SaaS İş Araçları ─────────────────────────────────────
+        public DbSet<CustomerRecord> CustomerRecords { get; set; }
+        public DbSet<JobRecord> JobRecords { get; set; }
+        public DbSet<PaymentRecord> PaymentRecords { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
+
+        // ─── Faz 4: Admin Governance ──────────────────────────────────────
+        public DbSet<Report> Reports { get; set; }
+        public DbSet<SuspensionAppeal> SuspensionAppeals { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -101,6 +116,50 @@ namespace ECommerce.Data
                 .HasForeignKey(a => a.ProductId)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.ServicePackage)
+                .WithMany(sp => sp.Appointments)
+                .HasForeignKey(a => a.ServicePackageId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<ServicePackage>()
+                .HasOne(sp => sp.Store)
+                .WithMany(s => s.ServicePackages)
+                .HasForeignKey(sp => sp.StoreId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<WorkArea>()
+                .HasOne(wa => wa.Store)
+                .WithMany(s => s.WorkAreas)
+                .HasForeignKey(wa => wa.StoreId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CustomerRequest>()
+                .HasOne(cr => cr.Customer)
+                .WithMany()
+                .HasForeignKey(cr => cr.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RequestOffer>()
+                .HasOne(ro => ro.Request)
+                .WithMany(cr => cr.Offers)
+                .HasForeignKey(ro => ro.RequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RequestOffer>()
+                .HasOne(ro => ro.Store)
+                .WithMany(s => s.RequestOffers)
+                .HasForeignKey(ro => ro.StoreId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CustomerRequest>()
+                .Property(cr => cr.Budget)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<RequestOffer>()
+                .Property(ro => ro.Price)
+                .HasColumnType("decimal(18,2)");
+
             modelBuilder.Entity<Review>()
                 .HasOne(r => r.User)
                 .WithMany()
@@ -118,6 +177,99 @@ namespace ECommerce.Data
                 .WithMany(s => s.Reviews)
                 .HasForeignKey(r => r.StoreId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // ─── Faz 3 İlişkileri ─────────────────────────────────────────────
+            modelBuilder.Entity<CustomerRecord>()
+                .HasOne(cr => cr.Store)
+                .WithMany()
+                .HasForeignKey(cr => cr.StoreId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<JobRecord>()
+                .HasOne(jr => jr.Store)
+                .WithMany()
+                .HasForeignKey(jr => jr.StoreId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<JobRecord>()
+                .HasOne(jr => jr.CustomerRecord)
+                .WithMany(cr => cr.JobRecords)
+                .HasForeignKey(jr => jr.CustomerRecordId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<JobRecord>()
+                .HasOne(jr => jr.Appointment)
+                .WithMany()
+                .HasForeignKey(jr => jr.AppointmentId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PaymentRecord>()
+                .HasOne(pr => pr.Store)
+                .WithMany()
+                .HasForeignKey(pr => pr.StoreId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PaymentRecord>()
+                .HasOne(pr => pr.CustomerRecord)
+                .WithMany(cr => cr.PaymentRecords)
+                .HasForeignKey(pr => pr.CustomerRecordId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PaymentRecord>()
+                .HasOne(pr => pr.JobRecord)
+                .WithMany(jr => jr.PaymentRecords)
+                .HasForeignKey(pr => pr.JobRecordId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Invoice>()
+                .HasOne(i => i.Store)
+                .WithMany()
+                .HasForeignKey(i => i.StoreId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Invoice>()
+                .HasOne(i => i.CustomerRecord)
+                .WithMany()
+                .HasForeignKey(i => i.CustomerRecordId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Invoice>()
+                .HasOne(i => i.JobRecord)
+                .WithMany()
+                .HasForeignKey(i => i.JobRecordId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // ─── Faz 4 İlişkileri ─────────────────────────────────────────────
+            modelBuilder.Entity<Report>()
+                .HasOne(r => r.Reporter)
+                .WithMany()
+                .HasForeignKey(r => r.ReporterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SuspensionAppeal>()
+                .HasOne(sa => sa.User)
+                .WithMany()
+                .HasForeignKey(sa => sa.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<SuspensionAppeal>()
+                .HasOne(sa => sa.Store)
+                .WithMany()
+                .HasForeignKey(sa => sa.StoreId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Seed Data - Platform Admin
+            modelBuilder.Entity<User>().HasData(new User
+            {
+                Id               = 9999,
+                FullName         = "Platform Admin",
+                Email            = "superadmin@platform.com",
+                Password         = "PrP+ZrMeO00Q+nC1ytSccRIpSvauTkdqHEBRVdRaoSE=", // Admin123!
+                UserType         = UserType.Admin,
+                SubscriptionPlan = SubscriptionPlan.Free,
+                IsActive         = true,
+                CreatedAt        = new DateTime(2026, 1, 1)
+            });
 
             // Seed Data - Kategoriler
             modelBuilder.Entity<Category>().HasData(

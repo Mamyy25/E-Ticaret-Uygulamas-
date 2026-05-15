@@ -128,14 +128,7 @@ namespace ECommerce.Web.Controllers
             if (cart == null || !cart.CartItems.Any())
                 return BadRequest(new { message = "Sepetiniz bo�." });
 
-            // Stok kontrol� � t�m �r�nleri tek seferde kontrol et
-            var stockErrors = cart.CartItems
-                .Where(ci => ci.Product.Stock < ci.Quantity)
-                .Select(ci => $"{ci.Product.Name}: stokta {ci.Product.Stock} adet kald�.")
-                .ToList();
-
-            if (stockErrors.Any())
-                return BadRequest(new { message = "Baz� �r�nlerde stok yetersiz.", errors = stockErrors });
+            // Dijital ürünler — stok kontrolü yok
 
             // Sipari� olu�tur
             var order = new Order
@@ -166,7 +159,7 @@ namespace ECommerce.Web.Controllers
                     Price = ci.Product.Price
                 });
 
-                ci.Product.Stock -= ci.Quantity;
+                // Dijital ürün — stok düşülmüyor, DownloadCount controller üzerinden artırılır
             }
 
             // Sepeti temizle

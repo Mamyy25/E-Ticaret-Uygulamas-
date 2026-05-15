@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ECommerce.Data;
 using ECommerce.Models;
+using ECommerce.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
@@ -19,229 +20,286 @@ namespace ECommerce.Web.Controllers
             _context = context;
         }
 
+        // ─── LIST ─────────────────────────────────────────────────────────
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetProducts([FromQuery] int? storeId)
+        public async Task<ActionResult<IEnumerable<object>>> GetProducts(
+            [FromQuery] int? storeId,
+            [FromQuery] LicenseType? licenseType,
+            [FromQuery] string? search,
+            [FromQuery] bool includeInactive = false)
         {
+            var callerType = User.FindFirst("UserType")?.Value;
+            var showInactive = includeInactive && callerType == "Admin";
+
             var query = _context.Products
-                .Where(p => !p.IsDeleted && p.IsActive)
+                .Where(p => !p.IsDeleted && (showInactive || p.IsActive))
                 .Include(p => p.Category)
                 .Include(p => p.Store)
                 .Include(p => p.StoreCategory)
                 .AsQueryable();
 
             if (storeId.HasValue)
-            {
                 query = query.Where(p => p.StoreId == storeId);
+
+            if (licenseType.HasValue)
+                query = query.Where(p => p.LicenseType == licenseType);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.ToLower();
+                query = query.Where(p =>
+                    p.Name.ToLower().Contains(s) ||
+                    p.Description.ToLower().Contains(s) ||
+                    (p.Keywords != null && p.Keywords.ToLower().Contains(s)));
             }
 
-            var products = await query.Select(p => new {
-                p.Id,
-                p.Name,
-                p.Description,
-                p.Price,
-                p.Stock,
-                p.ImageUrl,
-                p.Keywords,
-                p.IsFeatured,
-                p.IsService,
-                Category = new { p.Category.Id, p.Category.Name },
-                Store = p.Store != null ? new { p.Store.Id, p.Store.Name, p.Store.SellerId } : null,
-                StoreCategory = p.StoreCategory != null ? new { p.StoreCategory.Id, p.StoreCategory.Name } : null
-            }).ToListAsync();
+            var products = await query
+                .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new {
+                    p.Id, p.Name, p.Description, p.Price,
+                    p.ImageUrl, p.PreviewUrl,
+                    p.LicenseType,
+                    p.DownloadCount,
+                    p.Keywords, p.IsFeatured,
+                    Category = p.Category != null ? new { p.Category.Id, p.Category.Name } : null,
+                    Store = p.Store != null ? new { p.Store.Id, p.Store.Name, p.Store.SellerId } : null,
+                    StoreCategory = p.StoreCategory != null ? new { p.StoreCategory.Id, p.StoreCategory.Name } : null
+                }).ToListAsync();
 
             return Ok(products);
         }
 
+        // ─── DETAIL ───────────────────────────────────────────────────────
         [HttpGet("{id}")]
         public async Task<ActionResult<object>> GetProduct(int id)
         {
             var p = await _context.Products
-                .Include(prod => prod.Category)
-                .Include(prod => prod.Store)
-                .Include(prod => prod.StoreCategory)
-                .FirstOrDefaultAsync(prod => prod.Id == id && !prod.IsDeleted);
+                .Include(x => x.Category)
+                .Include(x => x.Store)
+                .Include(x => x.StoreCategory)
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
 
-            if (p == null) return NotFound(new { message = "Urun bulunamadi" });
+            if (p == null) return NotFound(new { message = "Ürün bulunamadı." });
 
             return Ok(new {
-                p.Id,
-                p.Name,
-                p.Description,
-                p.Price,
-                p.Stock,
-                p.ImageUrl,
-                p.Keywords,
-                p.IsFeatured,
-                p.IsService,
-                p.CategoryId,
-                p.StoreCategoryId,
-                Category = new { p.Category.Id, p.Category.Name },
+                p.Id, p.Name, p.Description, p.Price,
+                p.ImageUrl, p.FileUrl, p.PreviewUrl,
+                p.LicenseType, p.DownloadCount,
+                p.Keywords, p.IsFeatured,
+                p.CategoryId, p.StoreCategoryId,
+                p.CreatedAt,
+                Category = p.Category != null ? new { p.Category.Id, p.Category.Name } : null,
                 Store = p.Store != null ? new { p.Store.Id, p.Store.Name, p.Store.SellerId } : null,
                 StoreCategory = p.StoreCategory != null ? new { p.StoreCategory.Id, p.StoreCategory.Name } : null
             });
         }
 
-        [HttpGet("category/{categoryId}")]
-        public async Task<ActionResult<IEnumerable<object>>> GetProductsByCategory(int categoryId)
-        {
-            var products = await _context.Products
-                .Where(p => p.CategoryId == categoryId && !p.IsDeleted && p.IsActive)
-                .Include(p => p.Category)
-                .Include(p => p.Store)
-                .Select(p => new {
-                    p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.IsService,
-                    Category = new { p.Category.Id, p.Category.Name },
-                    Store = p.Store != null ? new { p.Store.Id, p.Store.Name, p.Store.SellerId } : null
-                })
-                .ToListAsync();
-
-            return Ok(products);
-        }
-
-        [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<object>>> SearchProducts([FromQuery] string searchTerm)
-        {
-            if (string.IsNullOrWhiteSpace(searchTerm)) return BadRequest(new { message = "Arama terimi bos olamaz" });
-            
-            searchTerm = searchTerm.ToLower();
-
-            var products = await _context.Products
-                .Where(p => !p.IsDeleted && p.IsActive &&
-                           (p.Name.ToLower().Contains(searchTerm) || 
-                            p.Description.ToLower().Contains(searchTerm) || 
-                            (p.Keywords != null && p.Keywords.ToLower().Contains(searchTerm))))
-                .Include(p => p.Category)
-                .Include(p => p.Store)
-                .Select(p => new {
-                    p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.IsService,
-                    Category = new { p.Category.Id, p.Category.Name },
-                    Store = p.Store != null ? new { p.Store.Id, p.Store.Name, p.Store.SellerId } : null
-                })
-                .ToListAsync();
-
-            return Ok(products);
-        }
-
-        [HttpPost]
+        // ─── DOWNLOAD (satın alınan ürün için indirme linki) ──────────────
+        [HttpGet("{id}/download")]
         [Authorize]
-        public async Task<ActionResult<Product>> CreateProduct([FromBody] Product product)
+        public async Task<ActionResult> GetDownloadLink(int id)
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var store = await _context.Stores.FirstOrDefaultAsync(s => s.SellerId == userId);
-            
-            if (store == null) return Unauthorized(new { message = "Urun eklemek icin magaza sahibi olmalisiniz." });
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            product.StoreId = store.Id;
-            product.CreatedAt = DateTime.Now;
-            
-            _context.Products.Add(product);
+            // Kullanıcının bu ürünü satın aldığını doğrula
+            var hasPurchased = await _context.OrderItems
+                .Include(oi => oi.Order)
+                .AnyAsync(oi => oi.ProductId == id && oi.Order.UserId == userId);
+
+            // Kendi mağazasının ürünü ise direkt erişim
+            var isOwner = await _context.Products
+                .AnyAsync(p => p.Id == id && p.Store != null && p.Store.SellerId == userId);
+
+            if (!hasPurchased && !isOwner)
+                return Forbid();
+
+            var product = await _context.Products.FindAsync(id);
+            if (product == null || string.IsNullOrEmpty(product.FileUrl))
+                return NotFound(new { message = "İndirme dosyası bulunamadı." });
+
+            product.DownloadCount++;
             await _context.SaveChangesAsync();
 
+            return Ok(new { downloadUrl = product.FileUrl, productName = product.Name });
+        }
+
+        // ─── FEATURED ─────────────────────────────────────────────────────
+        [HttpGet("featured")]
+        public async Task<ActionResult<IEnumerable<object>>> GetFeaturedProducts()
+        {
+            var manualFeatured = await _context.Products
+                .Where(p => !p.IsDeleted && p.IsActive && p.IsFeatured)
+                .Include(p => p.Category).Include(p => p.Store)
+                .ToListAsync();
+
+            var lastMonth = DateTime.Now.AddDays(-30);
+            var topIds = await _context.OrderItems
+                .Include(oi => oi.Order)
+                .Where(oi => oi.Order.OrderDate >= lastMonth)
+                .GroupBy(oi => oi.ProductId)
+                .OrderByDescending(g => g.Sum(oi => oi.Quantity))
+                .Take(6).Select(g => g.Key).ToListAsync();
+
+            var autoFeatured = await _context.Products
+                .Where(p => !p.IsDeleted && p.IsActive && topIds.Contains(p.Id))
+                .Include(p => p.Category).Include(p => p.Store)
+                .ToListAsync();
+
+            var combined = manualFeatured.Concat(autoFeatured)
+                .GroupBy(p => p.Id).Select(g => g.First())
+                .Take(12)
+                .Select(p => new {
+                    p.Id, p.Name, p.Description, p.Price,
+                    p.ImageUrl, p.PreviewUrl, p.LicenseType, p.DownloadCount, p.IsFeatured,
+                    Category = p.Category != null ? new { p.Category.Id, p.Category.Name } : null,
+                    Store = p.Store != null ? new { p.Store.Id, p.Store.Name, p.Store.SellerId } : null
+                });
+
+            return Ok(combined);
+        }
+
+        // ─── CREATE ───────────────────────────────────────────────────────
+        [HttpPost]
+        [Authorize]
+        public async Task<ActionResult<Product>> CreateProduct([FromBody] CreateProductDto dto)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var store = await _context.Stores.FirstOrDefaultAsync(s => s.SellerId == userId);
+            if (store == null) return Unauthorized(new { message = "Ürün eklemek için mağaza sahibi olmalısınız." });
+
+            var product = new Product
+            {
+                Name = dto.Name,
+                Description = dto.Description,
+                Price = dto.Price,
+                CategoryId = dto.CategoryId,
+                StoreCategoryId = dto.StoreCategoryId,
+                Keywords = dto.Keywords,
+                ImageUrl = dto.ImageUrl,
+                FileUrl = dto.FileUrl,
+                PreviewUrl = dto.PreviewUrl,
+                LicenseType = dto.LicenseType,
+                IsFeatured = dto.IsFeatured,
+                StoreId = store.Id,
+                CreatedAt = DateTime.Now,
+            };
+
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
         }
 
+        // ─── UPDATE ───────────────────────────────────────────────────────
         [HttpPut("{id}")]
         [Authorize]
-        public async Task<IActionResult> UpdateProduct(int id, [FromBody] Product product)
+        public async Task<IActionResult> UpdateProduct(int id, [FromBody] CreateProductDto dto)
         {
-            if (id != product.Id) return BadRequest(new { message = "ID uyusmazligi" });
-
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var store = await _context.Stores.FirstOrDefaultAsync(s => s.SellerId == userId);
-            
-            if (store == null) return Unauthorized(new { message = "Magazaniz yok." });
+            var isAdmin = User.FindFirstValue("UserType") == "Admin";
 
-            var existingProduct = await _context.Products.FindAsync(id);
-            if (existingProduct == null || existingProduct.IsDeleted) return NotFound();
+            var product = await _context.Products.FindAsync(id);
+            if (product == null || product.IsDeleted) return NotFound();
+            if (store == null && !isAdmin) return Forbid();
+            if (store != null && product.StoreId != store.Id && !isAdmin) return Forbid();
 
-            var isAdmin = User.FindFirstValue("IsAdmin") == "true";
-            if (existingProduct.StoreId != store.Id && !isAdmin)
-                return Forbid();
-
-            existingProduct.Name = product.Name;
-            existingProduct.Description = product.Description;
-            existingProduct.Price = product.Price;
-            existingProduct.Stock = product.Stock;
-            existingProduct.CategoryId = product.CategoryId;
-            existingProduct.StoreCategoryId = product.StoreCategoryId;
-            existingProduct.Keywords = product.Keywords;
-            existingProduct.IsActive = product.IsActive;
-            existingProduct.IsFeatured = product.IsFeatured;
-            existingProduct.ImageUrl = product.ImageUrl;
-            existingProduct.UpdatedAt = DateTime.Now;
+            product.Name = dto.Name;
+            product.Description = dto.Description;
+            product.Price = dto.Price;
+            product.CategoryId = dto.CategoryId;
+            product.StoreCategoryId = dto.StoreCategoryId;
+            product.Keywords = dto.Keywords;
+            product.ImageUrl = dto.ImageUrl;
+            product.FileUrl = dto.FileUrl;
+            product.PreviewUrl = dto.PreviewUrl;
+            product.LicenseType = dto.LicenseType;
+            product.IsFeatured = dto.IsFeatured;
+            product.IsActive = dto.IsActive;
+            product.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
             return NoContent();
         }
 
+        // ─── DELETE ───────────────────────────────────────────────────────
         [HttpDelete("{id}")]
         [Authorize]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var store = await _context.Stores.FirstOrDefaultAsync(s => s.SellerId == userId);
-            var isAdmin = User.FindFirstValue("IsAdmin") == "true";
+            var isAdmin = User.FindFirstValue("UserType") == "Admin";
 
             var product = await _context.Products.FindAsync(id);
             if (product == null) return NotFound();
-
             if (store == null && !isAdmin) return Forbid();
             if (store != null && product.StoreId != store.Id && !isAdmin) return Forbid();
 
             product.IsDeleted = true;
             product.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
-        [HttpGet("{id}/stock")]
-        public async Task<ActionResult> GetStock(int id)
+        // ─── SEARCH (legacy compat) ────────────────────────────────────
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<object>>> SearchProducts([FromQuery] string searchTerm)
         {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return BadRequest(new { message = "Arama terimi boş olamaz." });
+
+            return await GetProducts(null, null, searchTerm);
+        }
+
+        // ─── ADMIN: Ürün askıya al / aktifleştir ─────────────────────────
+        [HttpPut("{id}/admin-toggle-active")]
+        [Authorize]
+        public async Task<IActionResult> AdminToggleProductActive(int id, [FromBody] AdminSuspendProductDto dto)
+        {
+            if (User.FindFirstValue("UserType") != "Admin") return Forbid();
+
             var product = await _context.Products.FindAsync(id);
             if (product == null || product.IsDeleted) return NotFound();
 
-            return Ok(new { productId = id, stock = product.Stock, isInStock = product.Stock > 0 });
+            if (product.IsActive)
+            {
+                product.IsActive = false;
+                product.SuspendedAt = DateTime.Now;
+                product.SuspensionReason = dto.Reason;
+            }
+            else
+            {
+                product.IsActive = true;
+                product.SuspendedAt = null;
+                product.SuspensionReason = null;
+            }
+
+            product.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { product.Id, product.IsActive, message = product.IsActive ? "Ürün aktifleştirildi." : "Ürün askıya alındı." });
         }
+    }
 
-        [HttpGet("featured")]
-        public async Task<ActionResult<IEnumerable<object>>> GetFeaturedProducts()
-        {
-            // 1. Manuel olarak IsFeatured = true işaretlenenler
-            var manualFeatured = await _context.Products
-                .Where(p => !p.IsDeleted && p.IsActive && p.IsFeatured)
-                .Include(p => p.Category)
-                .Include(p => p.Store)
-                .ToListAsync();
+    // ─── DTO ──────────────────────────────────────────────────────────────
+    public class AdminSuspendProductDto
+    {
+        public string? Reason { get; set; }
+    }
 
-            // 2. Geçen ayın verilerine göre çok satanları hesapla (Otomatik Öne Çıkarılanlar)
-            var lastMonth = DateTime.Now.AddDays(-30);
-            var topSellingProductIds = await _context.OrderItems
-                .Include(oi => oi.Order)
-                .Where(oi => oi.Order.OrderDate >= lastMonth)
-                .GroupBy(oi => oi.ProductId)
-                .OrderByDescending(g => g.Sum(oi => oi.Quantity))
-                .Take(6)
-                .Select(g => g.Key)
-                .ToListAsync();
-
-            var autoFeatured = await _context.Products
-                .Where(p => !p.IsDeleted && p.IsActive && topSellingProductIds.Contains(p.Id))
-                .Include(p => p.Category)
-                .Include(p => p.Store)
-                .ToListAsync();
-
-            // İkisini birleştir, Distinct kullanarak tekrarları at, maksimum 12 ürün döndür
-            var combined = manualFeatured.Concat(autoFeatured)
-                .GroupBy(p => p.Id).Select(g => g.First())
-                .Take(12)
-                .Select(p => new {
-                    p.Id, p.Name, p.Description, p.Price, p.ImageUrl, p.IsFeatured, p.IsService,
-                    Category = new { p.Category.Id, p.Category.Name },
-                    Store = p.Store != null ? new { p.Store.Id, p.Store.Name, p.Store.SellerId } : null
-                });
-
-            return Ok(combined);
-        }
+    public class CreateProductDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public int? CategoryId { get; set; }
+        public int? StoreCategoryId { get; set; }
+        public string? Keywords { get; set; }
+        public string? ImageUrl { get; set; }
+        public string? FileUrl { get; set; }
+        public string? PreviewUrl { get; set; }
+        public LicenseType LicenseType { get; set; } = LicenseType.Personal;
+        public bool IsFeatured { get; set; } = false;
+        public bool IsActive { get; set; } = true;
     }
 }

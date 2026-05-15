@@ -33,54 +33,22 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  const firstName = user?.name?.split(' ')[0] || 'Kullanıcı';
+
   const renderWelcomeDashboard = () => (
     <View style={styles.dashCard}>
-       <View style={{ flex: 1 }}>
-          <Text style={styles.welcomeText}>Tekrar Hoş Geldin, {user?.sub?.split(' ')[0]} 👋</Text>
-          <View style={styles.dashStats}>
-             <View style={styles.statItem}>
-                <Text style={styles.statIcon}>🚚</Text>
-                <Text style={styles.statText}>Siparişim Yolda</Text>
-             </View>
-             <View style={styles.statItem}>
-                <Text style={styles.statIcon}>✉️</Text>
-                <Text style={styles.statText}>2 Yeni Mesaj</Text>
-             </View>
-          </View>
-       </View>
-       <View style={styles.dashBadge}>
-          <Text style={{ color: '#fff', fontWeight: '900', fontSize: 10 }}>VIP</Text>
-       </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.welcomeText}>Hoş geldiniz, {firstName} 👋</Text>
+        <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 4 }}>Bugün ne yapmak istersiniz?</Text>
+      </View>
     </View>
-  );
-
-  const renderStories = () => (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.storiesContainer}>
-       <TouchableOpacity style={styles.storyItem}>
-          <View style={[styles.storyCircle, { borderColor: colors.primary, borderStyle: 'dashed' }]}>
-             <Text style={{ fontSize: 24 }}>➕</Text>
-          </View>
-          <Text style={styles.storyName}>Hikayen</Text>
-       </TouchableOpacity>
-       {['Tekno Usta', 'Deri Sanatı', 'Moda Evi', 'Hızlı Tamir'].map((name, i) => (
-         <TouchableOpacity key={i} style={styles.storyItem}>
-            <View style={styles.storyCircle}>
-               <Image source={{ uri: `https://i.pravatar.cc/100?u=${i}` }} style={styles.storyImg} />
-            </View>
-            <Text style={styles.storyName}>{name}</Text>
-         </TouchableOpacity>
-       ))}
-    </ScrollView>
   );
 
   if (loading) return <View style={styles.centered}><ActivityIndicator color={colors.primary} size="large" /></View>;
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}>
-        
-        {/* Stories Section */}
-        {renderStories()}
+      <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* Personalized Header or Guest Hero */}
         <View style={{ paddingHorizontal: 20 }}>
@@ -116,16 +84,6 @@ const HomeScreen = ({ navigation }) => {
         </ScrollView>
 
 
-        {/* Assistant Tips */}
-        {isAuthenticated && (
-            <View style={styles.tipsContainer}>
-                <Text style={styles.sectionTitle}>💡 Alışveriş Asistanın</Text>
-                <View style={styles.tipCard}>
-                    <Text style={styles.tipTitle}>Mutfak Robotunuzun Bakımı</Text>
-                    <Text style={styles.tipText}>Bıçakların daha uzun süre keskin kalması için her ay 5 dakika boşta çalıştırın.</Text>
-                </View>
-            </View>
-        )}
 
         {/* Product Grid */}
         <View style={{ padding: 10 }}>

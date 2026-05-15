@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using ECommerce.Data;
 using ECommerce.Models;
+using ECommerce.Models.Enums;
 
 namespace ECommerce.Web.Controllers
 {
@@ -30,7 +31,7 @@ namespace ECommerce.Web.Controllers
             string Email,
             string Password,
             string ConfirmPassword,
-            bool? IsSeller // <--- NEW FLAG
+            string? UserType
         );
 
         public record LoginDto(
@@ -52,43 +53,56 @@ namespace ECommerce.Web.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
             if (dto.Password != dto.ConfirmPassword)
-                return BadRequest(new { message = "Sifreler eslesmiyor." });
+                return BadRequest(new { message = "Şifreler eşleşmiyor." });
 
-            var emailExists = await _context.Users
-                .AnyAsync(u => u.Email == dto.Email);
-
+            var emailExists = await _context.Users.AnyAsync(u => u.Email == dto.Email);
             if (emailExists)
-                return BadRequest(new { message = "Bu email adresi zaten kullaniliyor." });
+                return BadRequest(new { message = "Bu e-posta adresi zaten kullanılıyor." });
+
+            var userType = Enum.TryParse<UserType>(dto.UserType, ignoreCase: true, out var parsed)
+                ? parsed
+                : UserType.Consumer;
 
             var user = new User
             {
                 FullName = dto.FullName,
                 Email = dto.Email,
                 Password = HashPassword(dto.Password),
-                CreatedAt = DateTime.Now,
+                UserType = userType,
+                SubscriptionPlan = SubscriptionPlan.Free,
                 IsActive = true,
-                IsAdmin = false,
-                IsSeller = dto.IsSeller ?? false
+                CreatedAt = DateTime.Now
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // If user is seller, automatically create an empty store
-            if (user.IsSeller)
+            // Satıcı / esnaf / hizmet sağlayıcı kayıt olursa otomatik mağaza aç
+            if (userType is UserType.Seller or UserType.LocalArtisan or UserType.OnlineServiceProvider)
             {
+                var storeType = userType switch
+                {
+                    UserType.Seller => StoreType.Physical,
+                    UserType.OnlineServiceProvider => StoreType.Online,
+                    _ => StoreType.Service
+                };
+
                 var store = new Store
                 {
                     SellerId = user.Id,
-                    Name = user.FullName + " Magazasi",
-                    IsActive = true,
+                    Name = user.FullName + " Mağazası",
+                    StoreType = storeType,
+                    Status = "Pending",
+                    IsActive = false,
                     CreatedAt = DateTime.Now
                 };
                 _context.Stores.Add(store);
                 await _context.SaveChangesAsync();
+
+                return StatusCode(201, new { message = "Başvurunuz alındı. Onay için inceleniyor.", isPending = true });
             }
 
-            return StatusCode(201, new { message = "Kayit basarili. Giris yapabilirsiniz." });
+            return StatusCode(201, new { message = "Kayıt başarılı. Giriş yapabilirsiniz.", isPending = false });
         }
 
         [HttpPost("login")]
@@ -99,13 +113,15 @@ namespace ECommerce.Web.Controllers
             var hashedPassword = HashPassword(dto.Password);
 
             var user = await _context.Users
-                .FirstOrDefaultAsync(u =>
-                    u.Email == dto.Email &&
-                    u.Password == hashedPassword &&
-                    u.IsActive);
+                .Include(u => u.Store)
+                .FirstOrDefaultAsync(u => u.Email == dto.Email && u.Password == hashedPassword);
 
             if (user == null)
-                return Unauthorized(new { message = "Email veya sifre hatali." });
+                return Unauthorized(new { message = "E-posta veya şifre hatalı." });
+
+            // Askıya alınmamış VE aktif değilse reddet; askılı kullanıcı girebilir (SuspensionWall görecek)
+            if (!user.IsActive && !user.IsSuspended)
+                return Unauthorized(new { message = "Hesabınız devre dışı bırakılmıştır." });
 
             user.LastLoginDate = DateTime.Now;
             await _context.SaveChangesAsync();
@@ -120,9 +136,37 @@ namespace ECommerce.Web.Controllers
                     user.Id,
                     user.FullName,
                     user.Email,
-                    user.IsAdmin,
-                    user.IsSeller
+                    UserType = user.UserType.ToString(),
+                    SubscriptionPlan = user.SubscriptionPlan.ToString(),
+                    user.IsSuspended,
+                    user.SuspensionReason,
+                    user.SuspendedAt,
+                    StoreStatus = user.Store?.Status
                 }
+            });
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetMe()
+        {
+            var userId = GetUserIdFromToken();
+            if (userId == null) return Unauthorized();
+
+            var user = await _context.Users
+                .Include(u => u.Store)
+                .FirstOrDefaultAsync(u => u.Id == userId.Value);
+            if (user == null) return NotFound();
+
+            return Ok(new
+            {
+                user.Id,
+                user.IsSuspended,
+                user.SuspensionReason,
+                user.SuspendedAt,
+                StoreStatus          = user.Store?.Status,
+                StoreRejectionReason = user.Store?.RejectionReason,
+                StoreId              = user.Store?.Id
             });
         }
 
@@ -137,7 +181,7 @@ namespace ECommerce.Web.Controllers
             if (userId == null) return Unauthorized();
 
             var user = await _context.Users.FindAsync(userId.Value);
-            if (user == null) return NotFound(new { message = "Kullanici bulunamadi." });
+            if (user == null) return NotFound(new { message = "Kullanıcı bulunamadı." });
 
             return Ok(new
             {
@@ -149,7 +193,10 @@ namespace ECommerce.Web.Controllers
                 user.City,
                 user.ZipCode,
                 user.CreatedAt,
-                user.LastLoginDate
+                user.LastLoginDate,
+                UserType = user.UserType.ToString(),
+                SubscriptionPlan = user.SubscriptionPlan.ToString(),
+                user.SubscriptionExpiresAt
             });
         }
 
@@ -164,7 +211,7 @@ namespace ECommerce.Web.Controllers
             if (userId == null) return Unauthorized();
 
             var user = await _context.Users.FindAsync(userId.Value);
-            if (user == null) return NotFound(new { message = "Kullanici bulunamadi." });
+            if (user == null) return NotFound(new { message = "Kullanıcı bulunamadı." });
 
             user.FullName = dto.FullName;
             user.Phone = dto.Phone;
@@ -174,7 +221,73 @@ namespace ECommerce.Web.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Profil guncellendi." });
+            return Ok(new { message = "Profil güncellendi." });
+        }
+
+        // ─── ONE-TIME SETUP — eğer hiç Admin yoksa çalışır ───────────
+        [HttpPost("setup-first-admin")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SetupFirstAdmin([FromBody] LoginDto dto)
+        {
+            var anyAdmin = await _context.Users.AnyAsync(u => u.UserType == UserType.Admin);
+            if (anyAdmin) return BadRequest(new { message = "Zaten bir Admin hesabı mevcut. Bu endpoint artık kullanılamaz." });
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+            if (user == null) return NotFound(new { message = "Bu e-posta ile kayıtlı kullanıcı bulunamadı." });
+            if (user.Password != HashPassword(dto.Password)) return Unauthorized(new { message = "Şifre yanlış." });
+
+            user.UserType = UserType.Admin;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = $"{user.Email} artık Platform Admin. Bu endpoint devre dışı bırakıldı." });
+        }
+
+        // ─── ADMIN ───────────────────────────────────────────────────
+        [HttpGet("admin/users")]
+        [Authorize]
+        public async Task<IActionResult> GetAllUsers([FromQuery] string? search, [FromQuery] string? userType)
+        {
+            var callerType = User.FindFirst("UserType")?.Value;
+            if (callerType != "Admin") return Forbid();
+
+            var query = _context.Users.AsQueryable();
+            if (!string.IsNullOrEmpty(search))
+                query = query.Where(u => u.FullName.Contains(search) || u.Email.Contains(search));
+            if (!string.IsNullOrEmpty(userType) && Enum.TryParse<UserType>(userType, true, out var ut))
+                query = query.Where(u => u.UserType == ut);
+
+            var query2 = query;
+            if (!string.IsNullOrEmpty(Request.Query["status"]))
+            {
+                var status = Request.Query["status"].ToString();
+                if (status == "suspended") query2 = query2.Where(u => u.SuspendedAt != null);
+                else if (status == "active") query2 = query2.Where(u => u.SuspendedAt == null && u.IsActive);
+            }
+
+            var users = await query2.OrderByDescending(u => u.CreatedAt)
+                .Select(u => new
+                {
+                    u.Id, u.FullName, u.Email, u.Phone, u.City,
+                    UserType = u.UserType.ToString(),
+                    SubscriptionPlan = u.SubscriptionPlan.ToString(),
+                    u.IsActive, u.CreatedAt, u.LastLoginDate,
+                    u.IsSuspended, u.SuspensionReason, u.SuspendedAt
+                }).ToListAsync();
+
+            return Ok(users);
+        }
+
+        [HttpPut("admin/users/{id}/toggle-active")]
+        [Authorize]
+        public async Task<IActionResult> ToggleUserActive(int id)
+        {
+            var callerType = User.FindFirst("UserType")?.Value;
+            if (callerType != "Admin") return Forbid();
+
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
+            user.IsActive = !user.IsActive;
+            await _context.SaveChangesAsync();
+            return Ok(new { user.Id, user.IsActive });
         }
 
         private string GenerateJwtToken(User user)
@@ -187,13 +300,13 @@ namespace ECommerce.Web.Controllers
                 new(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new(ClaimTypes.Email,          user.Email),
                 new(ClaimTypes.Name,           user.FullName),
-                new("IsAdmin",                 user.IsAdmin.ToString().ToLower()),
-                new("IsSeller",                user.IsSeller.ToString().ToLower())
+                new("UserType",                user.UserType.ToString()),
+                new("SubscriptionPlan",        user.SubscriptionPlan.ToString())
             };
 
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(7),   
+                expires: DateTime.UtcNow.AddDays(7),
                 signingCredentials: creds
             );
 

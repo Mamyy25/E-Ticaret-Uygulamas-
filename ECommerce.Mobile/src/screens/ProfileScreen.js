@@ -1,10 +1,12 @@
 import React, { useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { colors } from '../theme/colors';
 
 const ProfileScreen = () => {
   const { user, logout, userMode, setUserMode } = useContext(AuthContext);
+  const { isDark, toggleTheme } = useTheme();
 
   const handleLogout = () => {
     logout();
@@ -51,6 +53,17 @@ const ProfileScreen = () => {
             </TouchableOpacity>
           </View>
         )}
+
+        {/* Tema Toggle */}
+        <TouchableOpacity
+          style={[styles.themeBtn, { backgroundColor: isDark ? 'rgba(124,58,237,0.1)' : 'rgba(70,72,212,0.1)', borderColor: isDark ? 'rgba(124,58,237,0.3)' : 'rgba(70,72,212,0.3)' }]}
+          onPress={toggleTheme}
+        >
+          <Text style={{ fontSize: 20 }}>{isDark ? '☀️' : '🌙'}</Text>
+          <Text style={[styles.themeBtnText, { color: isDark ? '#8B5CF6' : '#4648D4' }]}>
+            {isDark ? 'Açık Temaya Geç' : 'Koyu Temaya Geç'}
+          </Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutText}>Hesaptan Çıkış Yap</Text>
@@ -129,6 +142,19 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
     fontSize: 16,
+  },
+  themeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  themeBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   logoutBtn: {
     backgroundColor: '#FEF2F2',

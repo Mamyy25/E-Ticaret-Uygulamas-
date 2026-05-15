@@ -15,6 +15,8 @@ namespace ECommerce.Models
 
         public int? ProductId { get; set; }
 
+        public int? ServicePackageId { get; set; }
+
         [Required]
         public DateTime AppointmentDate { get; set; }
 
@@ -34,5 +36,8 @@ namespace ECommerce.Models
 
         [ForeignKey("ProductId")]
         public Product? Product { get; set; }
+
+        [ForeignKey("ServicePackageId")]
+        public ServicePackage? ServicePackage { get; set; }
     }
 }

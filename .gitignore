@@ -85,6 +85,11 @@ Desktop.ini
 ECommerce.FrontendWeb/
 videolar/
 
+# Local tooling and AI context — not project code
+_design-system/
+.claude/
+Aİ Toolkit/
+
 # Node modules and Expo (Frontend/Mobile)
 **/node_modules/
 .expo/

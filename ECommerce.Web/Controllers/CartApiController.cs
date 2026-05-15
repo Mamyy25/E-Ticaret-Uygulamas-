@@ -8,12 +8,12 @@ using ECommerce.Models;
 namespace ECommerce.Web.Controllers
 {
     /// <summary>
-    /// Sepet iþlemleri için API endpoint'leri
+    /// Sepet iï¿½lemleri iï¿½in API endpoint'leri
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json")]
-    [Authorize]   // Tüm sepet iþlemleri login gerektiriyor
+    [Authorize]   // Tï¿½m sepet iï¿½lemleri login gerektiriyor
     public class CartApiController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -23,19 +23,19 @@ namespace ECommerce.Web.Controllers
             _context = context;
         }
 
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         // DTOs
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
         public record AddToCartDto(int ProductId, int Quantity);
         public record UpdateQuantityDto(int Quantity);
 
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         // GET: api/cart
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
         /// <summary>
-        /// Kullanýcýnýn sepetini getirir
+        /// Kullanï¿½cï¿½nï¿½n sepetini getirir
         /// </summary>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -71,7 +71,7 @@ namespace ECommerce.Web.Controllers
                 unitPrice = ci.Product.Price,
                 quantity = ci.Quantity,
                 subTotal = ci.Product.Price * ci.Quantity,
-                maxStock = ci.Product.Stock
+                maxStock = 999
             });
 
             return Ok(new
@@ -82,12 +82,12 @@ namespace ECommerce.Web.Controllers
             });
         }
 
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         // POST: api/cart
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
         /// <summary>
-        /// Sepete ürün ekler. Ürün zaten varsa miktarý artýrýr.
+        /// Sepete ï¿½rï¿½n ekler. ï¿½rï¿½n zaten varsa miktarï¿½ artï¿½rï¿½r.
         /// </summary>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -99,16 +99,15 @@ namespace ECommerce.Web.Controllers
             if (userId == null) return Unauthorized();
 
             if (dto.Quantity < 1)
-                return BadRequest(new { message = "Miktar en az 1 olmalýdýr." });
+                return BadRequest(new { message = "Miktar en az 1 olmalï¿½dï¿½r." });
 
             var product = await _context.Products.FindAsync(dto.ProductId);
             if (product == null || product.IsDeleted || !product.IsActive)
-                return NotFound(new { message = "Ürün bulunamadý." });
+                return NotFound(new { message = "ï¿½rï¿½n bulunamadï¿½." });
 
-            if (product.Stock < dto.Quantity)
-                return BadRequest(new { message = $"Yetersiz stok. Mevcut stok: {product.Stock}" });
+            // Dijital Ã¼rÃ¼n â€” stok kontrolÃ¼ yok
 
-            // Sepeti bul veya oluþtur
+            // Sepeti bul veya oluï¿½tur
             var cart = await _context.Carts
                 .Include(c => c.CartItems)
                 .FirstOrDefaultAsync(c => c.UserId == userId.Value);
@@ -125,8 +124,7 @@ namespace ECommerce.Web.Controllers
             if (cartItem != null)
             {
                 var newQty = cartItem.Quantity + dto.Quantity;
-                if (newQty > product.Stock)
-                    return BadRequest(new { message = $"Yetersiz stok. Sepette zaten {cartItem.Quantity} adet var, maksimum {product.Stock} eklenebilir." });
+                // Dijital Ã¼rÃ¼n â€” stok kontrolÃ¼ yok
 
                 cartItem.Quantity = newQty;
             }
@@ -145,15 +143,15 @@ namespace ECommerce.Web.Controllers
             cart.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Ürün sepete eklendi.", totalItems = cart.TotalItems });
+            return Ok(new { message = "ï¿½rï¿½n sepete eklendi.", totalItems = cart.TotalItems });
         }
 
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         // PUT: api/cart/{cartItemId}
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
         /// <summary>
-        /// Sepetteki bir ürünün miktarýný günceller
+        /// Sepetteki bir ï¿½rï¿½nï¿½n miktarï¿½nï¿½ gï¿½nceller
         /// </summary>
         [HttpPut("{cartItemId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -165,7 +163,7 @@ namespace ECommerce.Web.Controllers
             if (userId == null) return Unauthorized();
 
             if (dto.Quantity < 1)
-                return BadRequest(new { message = "Miktar en az 1 olmalýdýr." });
+                return BadRequest(new { message = "Miktar en az 1 olmalï¿½dï¿½r." });
 
             var cartItem = await _context.CartItems
                 .Include(ci => ci.Cart)
@@ -173,35 +171,34 @@ namespace ECommerce.Web.Controllers
                 .FirstOrDefaultAsync(ci => ci.Id == cartItemId && ci.Cart.UserId == userId.Value);
 
             if (cartItem == null)
-                return NotFound(new { message = "Sepet öðesi bulunamadý." });
+                return NotFound(new { message = "Sepet ï¿½ï¿½esi bulunamadï¿½." });
 
-            if (dto.Quantity > cartItem.Product.Stock)
-                return BadRequest(new { message = $"Yetersiz stok. Maksimum {cartItem.Product.Stock} adet eklenebilir." });
+            // Dijital Ã¼rÃ¼n â€” stok kontrolÃ¼ yok
 
             cartItem.Quantity = dto.Quantity;
             cartItem.Cart.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
-            // Güncel sepet toplamlarýný da dön (React Native state güncellemesi için)
+            // Gï¿½ncel sepet toplamlarï¿½nï¿½ da dï¿½n (React Native state gï¿½ncellemesi iï¿½in)
             var cart = await _context.Carts
                 .Include(c => c.CartItems).ThenInclude(ci => ci.Product)
                 .FirstOrDefaultAsync(c => c.UserId == userId.Value);
 
             return Ok(new
             {
-                message = "Miktar güncellendi.",
+                message = "Miktar gï¿½ncellendi.",
                 subTotal = cartItem.Quantity * cartItem.Product.Price,
                 totalItems = cart!.TotalItems,
                 totalAmount = cart.TotalAmount
             });
         }
 
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         // DELETE: api/cart/{cartItemId}
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
         /// <summary>
-        /// Sepetten bir ürünü kaldýrýr
+        /// Sepetten bir ï¿½rï¿½nï¿½ kaldï¿½rï¿½r
         /// </summary>
         [HttpDelete("{cartItemId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -216,18 +213,18 @@ namespace ECommerce.Web.Controllers
                 .FirstOrDefaultAsync(ci => ci.Id == cartItemId && ci.Cart.UserId == userId.Value);
 
             if (cartItem == null)
-                return NotFound(new { message = "Sepet öðesi bulunamadý." });
+                return NotFound(new { message = "Sepet ï¿½ï¿½esi bulunamadï¿½." });
 
             _context.CartItems.Remove(cartItem);
             cartItem.Cart.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Ürün sepetten kaldýrýldý." });
+            return Ok(new { message = "ï¿½rï¿½n sepetten kaldï¿½rï¿½ldï¿½." });
         }
 
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         // DELETE: api/cart
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
         /// <summary>
         /// Sepeti tamamen temizler
@@ -252,9 +249,9 @@ namespace ECommerce.Web.Controllers
             return Ok(new { message = "Sepet temizlendi." });
         }
 
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
-        // Yardýmcý metod
-        // ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        // Yardï¿½mcï¿½ metod
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
         private int? GetUserIdFromToken()
         {
