@@ -1033,12 +1033,21 @@ namespace ECommerce.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("EmailVerificationToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("EmailVerificationTokenExpiry")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEmailVerified")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("LastLoginDate")
@@ -1087,6 +1096,7 @@ namespace ECommerce.Data.Migrations
                             Email = "superadmin@platform.com",
                             FullName = "Platform Admin",
                             IsActive = true,
+                            IsEmailVerified = false,
                             Password = "PrP+ZrMeO00Q+nC1ytSccRIpSvauTkdqHEBRVdRaoSE=",
                             SubscriptionPlan = 0,
                             UserType = 4

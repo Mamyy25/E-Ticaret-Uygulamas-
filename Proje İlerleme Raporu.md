@@ -305,3 +305,75 @@ Bu hafta rapora kıyasla çoğunlukla bu zamana kadar yaptıklarımı artık UI 
 	4. Bilinmeyen İletişim Hatası
 	Mobil testlerdeki iletişim hatalarını (Axios Timeout) çözmek için otomatik IP tespiti yaptım. Bunun yanı sıra react-native-safe-area-context kullanmaya başladım. Bu hatayı çözerken Aİ kullandım.
 
+**8. Hafta**
+
+**Video Link :** https://drive.google.com/file/d/1QScUbUghLUqlYtUtpOg8BIVZkffHK7PZ/view?usp=sharing
+
+Bu hafta sipariş akışını çalışır hale getirdim. Önceki haftalarda iskelet halinde duran CheckoutScreen'i komple yeniden yazdım, OrdersScreen'e de expandable kart yapısı ve durum takibi ekledim. Backend tarafında zaten /api/OrderApi endpoint'i mevcuttu, bu hafta mobil tarafın bununla tam entegrasyonunu tamamladım.
+
+
+	1. Checkout Screen (Sipariş Tamamlama Ekranı):
+	Sepetteki ürünlerin onaylandığı ve siparişin oluşturulduğu ekranı yeniden yazdım. Önceki basit versiyon yerine iki bölümlü yapı kurdum.
+	- **Dosya:** CheckoutScreen.js
+	- **İşlev:** Teslimat Adresi bölümü (Şehir/İlçe ve Açık Adres alanları) ile Kart Bilgileri bölümü (kart üzerindeki isim, kart numarası otomatik 4'lü gruplama, son kullanma tarihi AA/YY formatı, CVV) ayrı section kartlarında gösteriliyor. Form validation kontrolü eksik alan olduğunda kullanıcıyı uyarıyor.
+
+
+	2. Order POST (Sipariş Backend'e Kaydedilmesi):
+	Siparişi Tamamla butonuna basıldığında sipariş verisinin backend veritabanına kaydedilmesi.
+	- **Dosya:** CheckoutScreen.js (handleCheckout fonksiyonu)
+	- **İşlev:** axios.post('/api/OrderApi', { shippingAddress, shippingCity }) isteği gönderiliyor. Başarılı yanıtta sipariş numarasını içeren bir onay Alert'i çıkıyor ve kullanıcı ana sayfaya yönlendiriliyor. Hata durumunda backend'den gelen mesaj kullanıcıya gösteriliyor.
+
+
+	3. Sipariş Geçmişi:
+	Kullanıcının geçmiş siparişlerini listeleyip detaylarına bakabildiği ekran.
+	- **Dosya:** OrdersScreen.js
+	- **İşlev:** Ekran açıldığında GET /api/OrderApi isteğiyle siparişler çekiliyor. Her sipariş kartında sipariş numarası, tarih, toplam tutar ve durum badge'i (Beklemede / Hazırlanıyor / Kargoda / Teslim Edildi / İptal) gösteriliyor. Karta tıklandığında bir panel açılıyor ve içinde sipariş kalemleri (ürün adı, adet, tutar) listeleniyor. useFocusEffect ile sekmeye her dönüşte liste güncelleniyor. ProfileScreen'deki "Siparişlerim" menü satırı bu ekrana yönlendiriyor.
+
+
+**9. Hafta**
+
+**Video Link :** https://drive.google.com/file/d/10tDoS68O1e9sYopJ9k59WMhvReTORjXq/view?usp=sharing
+
+Bu hafta kullanıcı profili düzenleme, admin rolüne özel ekranlar ve ürün ekleme sırasında resim girişi konularında çalıştım. Admin modu için tamamen ayrı bir dashboard ekranı ve navigasyon akışı kurdum.
+
+
+	1. User Profile (Kullanıcı Profili Güncelleme):
+	Kullanıcının kendi bilgilerini uygulama içinden güncelleyebildiği düzenleme modunu ekledim.
+	- **Dosya:** ProfileScreen.js (startEdit, saveEdit fonksiyonları ve EditInput bileşeni)
+	- **İşlev:** Profil ekranının sağ üst köşesindeki kalem ikonuna basıldığında form alanları (Ad Soyad, Telefon, Şehir, Adres) açılıyor. Her alan odaklandığında border rengi Animated ile primary renge geçiyor. Kaydet butonuna basıldığında PUT /api/AccountApi/profile isteği gönderiliyor, başarılı olursa AuthContext'teki kullanıcı verisi yenileniyor. İptal butonuyla form kapanıyor.
+
+
+	2. Admin Mode (Admin Rolüne Özel İşlevler):
+	Kullanıcı "Admin" rolündeyse uygulamanın farklı bir yönetim ekranına ve navigasyona yönlendirilmesini sağladım.
+	- **Dosyalar:** AppNavigator.js, AdminDashboardScreen.js, ProfileScreen.js, BottomTabBar.js
+	- **İşlev:** AuthContext'ten gelen isAdmin değerine göre navigasyon tamamen ayrışıyor; admin kullanıcılar normal vitrin ekranlarını görmeden doğrudan AdminDashboardScreen'e düşüyor. AdminDashboardScreen içinde 6 sekme (Genel Bakış, Başvurular, Mağazalar, Kullanıcılar, Şikayetler, İtirazlar) bulunuyor; mağaza başvurularını onaylama/reddetme, kullanıcı ve mağaza askıya alma/kaldırma, şikayet çözme gibi admin işlemleri bu sekmelerde. ProfileScreen'de de isAdmin kontrolüyle admin kullanıcılara farklı menü satırları gösteriliyor.
+
+
+	3. Image Upload (Ürün Resmi Girişi Altyapısı):
+	Yeni ürün eklerken resim bağlantısı girilerek ürünün görsel olarak listelenmesini sağlayan altyapıyı kurdum.
+	- **Dosyalar:** StoreProfileScreen.js (ProductFormSheet — imageUrl alanı, satır 231), StoreProfileScreen.js (StoreEditSheet — profileImageUrl ve bannerImageUrl alanları, satırlar 643-654)
+	- **İşlev:** Ürün ekleme formunda imageUrl alanına URL girildiğinde bu değer POST /api/ProductsApi isteğiyle birlikte backend'e gönderiliyor ve ürün kartlarında görsel olarak gösteriliyor. Mağaza düzenleme formunda ise profileImageUrl ve bannerImageUrl alanları aynı şekilde çalışıyor; mağaza profil başlığında girilen URL gerçek görsel olarak render ediliyor.
+
+
+**10. Hafta**
+
+**Video Link :** https://drive.google.com/file/d/1whm7baFXrQ4m93uFx23g5SNOK7-ARgZ3/view?usp=sharing
+
+Son haftada uygulamayı gerçek bir cihazda uçtan uca test ettim ve hata yönetimini tüm ekranlarda standart hale getirdim. Kayıt olma aşamasından ürün inceleme, sepete ekleme, sipariş verme ve sipariş geçmişini görmeye kadar tüm akışı gerçek bir Android cihazda test ederek son kontrolleri tamamladım.
+
+
+	1. Hata Yönetimi:
+	API hataları ve beklenmedik durumlar için uygulama genelinde standart bir hata gösterim mekanizması kurdum.
+	- **Dosyalar:** Tüm ekran dosyaları (CheckoutScreen.js, OrdersScreen.js, CartScreen.js, ProductDetailScreen.js vb.)
+	- **İşlev:** Her API çağrısı try/catch bloğuna alındı; hata durumunda err.response?.data?.message okunarak kullanıcıya anlamlı bir Alert gösteriliyor. Backend'den 403 (yetkisiz) yanıtı geldiğinde özel bir mesaj ve yönlendirme aksiyonu eklendi (örneğin satın alınmamış dijital ürün indirilmeye çalışıldığında). Veri yüklenirken SkeletonBox bileşenleriyle placeholder görünümü, veri boş döndüğünde ise EmptyState bileşeniyle açıklayıcı boş durum ekranı gösteriliyor
+
+
+	2. E2E Testler (Gerçek Cihaz Testi):
+	Uygulamanın kayıt aşamasından sipariş verme aşamasına kadar tüm akışını gerçek bir Android ve İOS cihazda test ettim.
+
+
+	3. Rapor Güncelleme:
+	Projenin başından bu yana yapılan tüm mobil geliştirmeler hafta hafta bu raporda belgelendi ve her haftaya ait ilerleme videoları Drive klasörüne yüklendi.
+	- **Dosya:** Proje İlerleme Raporu.md
+	- **İşlev:** 1. haftadan 10. haftaya kadar yapılan geliştirmeler, kullanılan dosyalar ve işlevleri bu raporda haftalık olarak kayıt altına alındı. Her haftaya ait ilerleme videosu Google Drive'a yüklenerek linkleri rapora eklendi.
+

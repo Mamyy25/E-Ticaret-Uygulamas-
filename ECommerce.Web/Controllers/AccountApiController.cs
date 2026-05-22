@@ -9,6 +9,7 @@ using System.Text;
 using ECommerce.Data;
 using ECommerce.Models;
 using ECommerce.Models.Enums;
+using ECommerce.Web.Services;
 
 namespace ECommerce.Web.Controllers
 {
@@ -19,11 +20,13 @@ namespace ECommerce.Web.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _config;
+        private readonly IEmailService _emailService;
 
-        public AccountApiController(ApplicationDbContext context, IConfiguration config)
+        public AccountApiController(ApplicationDbContext context, IConfiguration config, IEmailService emailService)
         {
             _context = context;
             _config = config;
+            _emailService = emailService;
         }
 
         public record RegisterDto(
@@ -63,6 +66,8 @@ namespace ECommerce.Web.Controllers
                 ? parsed
                 : UserType.Consumer;
 
+            var verifyToken = Guid.NewGuid().ToString("N");
+
             var user = new User
             {
                 FullName = dto.FullName,
@@ -71,11 +76,23 @@ namespace ECommerce.Web.Controllers
                 UserType = userType,
                 SubscriptionPlan = SubscriptionPlan.Free,
                 IsActive = true,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.Now,
+                IsEmailVerified = false,
+                EmailVerificationToken = verifyToken,
+                EmailVerificationTokenExpiry = DateTime.Now.AddHours(24),
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+
+            // Email doğrulama gönder (hata olursa kayıt yine de tamamlanır)
+            try
+            {
+                var baseUrl = _config["App:BaseUrl"] ?? "http://localhost:5173";
+                var verifyUrl = $"{baseUrl}/verify-email?token={verifyToken}";
+                await _emailService.SendEmailAsync(dto.Email, "Kairos — Email Adresinizi Doğrulayın", BuildVerificationEmail(dto.FullName, verifyUrl));
+            }
+            catch { /* Email gönderilemese de kayıt devam eder */ }
 
             // Satıcı / esnaf / hizmet sağlayıcı kayıt olursa otomatik mağaza aç
             if (userType is UserType.Seller or UserType.LocalArtisan or UserType.OnlineServiceProvider)
@@ -102,7 +119,62 @@ namespace ECommerce.Web.Controllers
                 return StatusCode(201, new { message = "Başvurunuz alındı. Onay için inceleniyor.", isPending = true });
             }
 
-            return StatusCode(201, new { message = "Kayıt başarılı. Giriş yapabilirsiniz.", isPending = false });
+            return StatusCode(201, new { message = "Kayıt başarılı. Email adresinizi doğrulamanız için bir link gönderdik.", isPending = false });
+        }
+
+        [HttpGet("verify-email")]
+        [AllowAnonymous]
+        public async Task<IActionResult> VerifyEmail([FromQuery] string token)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u =>
+                u.EmailVerificationToken == token &&
+                u.EmailVerificationTokenExpiry > DateTime.Now);
+
+            if (user == null)
+                return BadRequest(new { message = "Geçersiz veya süresi dolmuş doğrulama bağlantısı." });
+
+            user.IsEmailVerified = true;
+            user.EmailVerificationToken = null;
+            user.EmailVerificationTokenExpiry = null;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Email adresiniz başarıyla doğrulandı! Artık tüm özelliklere erişebilirsiniz." });
+        }
+
+        [HttpPost("resend-verification")]
+        [Authorize]
+        public async Task<IActionResult> ResendVerification()
+        {
+            var userId = GetUserIdFromToken();
+            if (userId == null) return Unauthorized();
+
+            var user = await _context.Users.FindAsync(userId.Value);
+            if (user == null) return NotFound();
+            if (user.IsEmailVerified)
+                return BadRequest(new { message = "Email adresiniz zaten doğrulanmış." });
+
+            // Rate limit: son 5 dakikada zaten gönderdiyse beklet
+            if (user.EmailVerificationTokenExpiry.HasValue &&
+                user.EmailVerificationTokenExpiry.Value > DateTime.Now.AddMinutes(1435))
+                return BadRequest(new { message = "Lütfen birkaç dakika bekleyip tekrar deneyin." });
+
+            var token = Guid.NewGuid().ToString("N");
+            user.EmailVerificationToken = token;
+            user.EmailVerificationTokenExpiry = DateTime.Now.AddHours(24);
+            await _context.SaveChangesAsync();
+
+            try
+            {
+                var baseUrl = _config["App:BaseUrl"] ?? "http://localhost:5173";
+                var verifyUrl = $"{baseUrl}/verify-email?token={token}";
+                await _emailService.SendEmailAsync(user.Email, "Kairos — Email Adresinizi Doğrulayın", BuildVerificationEmail(user.FullName, verifyUrl));
+            }
+            catch
+            {
+                return StatusCode(500, new { message = "Email gönderilemedi. Lütfen daha sonra tekrar deneyin." });
+            }
+
+            return Ok(new { message = "Doğrulama emaili tekrar gönderildi. Gelen kutunuzu kontrol edin." });
         }
 
         [HttpPost("login")]
@@ -164,6 +236,7 @@ namespace ECommerce.Web.Controllers
                 user.IsSuspended,
                 user.SuspensionReason,
                 user.SuspendedAt,
+                user.IsEmailVerified,
                 StoreStatus          = user.Store?.Status,
                 StoreRejectionReason = user.Store?.RejectionReason,
                 StoreId              = user.Store?.Id
@@ -325,5 +398,50 @@ namespace ECommerce.Web.Controllers
             var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
             return Convert.ToBase64String(bytes);
         }
+
+        private static string BuildVerificationEmail(string fullName, string verifyUrl) => $@"
+<!DOCTYPE html>
+<html lang=""tr"">
+<head><meta charset=""UTF-8""><meta name=""viewport"" content=""width=device-width,initial-scale=1""></head>
+<body style=""margin:0;padding:0;background:#f4f1ff;font-family:'Segoe UI',Arial,sans-serif;"">
+  <div style=""max-width:520px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(70,72,212,0.10);"">
+
+    <!-- Header -->
+    <div style=""background:linear-gradient(135deg,#4648D4,#7C3AED);padding:36px 32px;text-align:center;"">
+      <div style=""font-size:28px;font-weight:900;color:#fff;letter-spacing:-0.5px;"">Kairos</div>
+      <div style=""font-size:12px;color:rgba(255,255,255,0.7);margin-top:4px;letter-spacing:0.08em;"">DOĞRU AN. DOĞRU KİŞİ.</div>
+    </div>
+
+    <!-- Body -->
+    <div style=""padding:36px 32px;"">
+      <h2 style=""margin:0 0 12px;font-size:22px;font-weight:800;color:#1B1B23;"">Merhaba, {fullName}! 👋</h2>
+      <p style=""margin:0 0 24px;font-size:15px;color:#555;line-height:1.6;"">
+        Kairos'a hoş geldiniz! Hesabınızı etkinleştirmek için aşağıdaki butona tıklayarak email adresinizi doğrulayın.
+      </p>
+
+      <div style=""text-align:center;margin:32px 0;"">
+        <a href=""{verifyUrl}"" style=""display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#4648D4,#7C3AED);color:#fff;font-size:15px;font-weight:700;border-radius:999px;text-decoration:none;letter-spacing:0.02em;"">
+          Email Adresimi Doğrula →
+        </a>
+      </div>
+
+      <p style=""margin:0 0 8px;font-size:13px;color:#888;line-height:1.5;"">
+        Buton çalışmıyorsa aşağıdaki linki tarayıcınıza yapıştırın:
+      </p>
+      <p style=""margin:0;font-size:12px;color:#4648D4;word-break:break-all;"">{verifyUrl}</p>
+
+      <hr style=""margin:28px 0;border:none;border-top:1px solid #eee;"">
+      <p style=""margin:0;font-size:12px;color:#aaa;line-height:1.5;"">
+        Bu link <strong>24 saat</strong> geçerlidir. Bu emaili siz istemediyseniz görmezden gelebilirsiniz.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style=""background:#f8f7ff;padding:20px 32px;text-align:center;"">
+      <p style=""margin:0;font-size:12px;color:#bbb;"">© 2026 Kairos Platform · Tüm hakları saklıdır.</p>
+    </div>
+  </div>
+</body>
+</html>";
     }
 }

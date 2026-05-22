@@ -42,6 +42,11 @@ namespace ECommerce.Models
 
         public DateTime? LastLoginDate { get; set; }
 
+        // ─── Email Doğrulama ─────────────────────────────────────────────
+        public bool IsEmailVerified { get; set; } = false;
+        public string? EmailVerificationToken { get; set; }
+        public DateTime? EmailVerificationTokenExpiry { get; set; }
+
         // ─── Faz4: Askıya Alma ───────────────────────────────────────────
         public DateTime? SuspendedAt { get; set; }
         [StringLength(500)]

@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
+import { API_BASE } from '../config';
 
 export const AuthContext = createContext();
 
@@ -13,10 +14,11 @@ export const AuthProvider = ({ children }) => {
   const [suspensionReason, setSuspensionReason] = useState(null);
   const [storeStatus, setStoreStatus] = useState(null);
   const [storeRejectionReason, setStoreRejectionReason] = useState(null);
+  const [myStoreId, setMyStoreId] = useState(null);
+  const [isEmailVerified, setIsEmailVerified] = useState(true);
   const pollingRef = useRef(null);
 
-  const API_IP = '172.20.10.2';
-  axios.defaults.baseURL = `http://${API_IP}:5133`;
+  axios.defaults.baseURL = API_BASE;
   axios.defaults.timeout = 15000;
 
   useEffect(() => { loadToken(); }, []);
@@ -42,6 +44,7 @@ export const AuthProvider = ({ children }) => {
       setToken(newToken);
       axios.defaults.headers.common['Authorization'] = 'Bearer ' + newToken;
       await fetchAccountStatus(newToken);
+      await refreshProfile();
       startPolling();
     } catch (e) {
       console.error('Token geçersiz:', e);
@@ -57,6 +60,24 @@ export const AuthProvider = ({ children }) => {
       setSuspensionReason(res.data.suspensionReason || null);
       setStoreStatus(res.data.storeStatus || null);
       setStoreRejectionReason(res.data.storeRejectionReason || null);
+      setMyStoreId(res.data.myStoreId || null);
+      setIsEmailVerified(res.data.isEmailVerified ?? true);
+    } catch {
+      // sessiz kal
+    }
+  };
+
+  const refreshProfile = async () => {
+    try {
+      const res = await axios.get('/api/AccountApi/profile');
+      setUser(prev => prev ? {
+        ...prev,
+        fullName: res.data.fullName,
+        phone:    res.data.phone    || null,
+        city:     res.data.city     || null,
+        address:  res.data.address  || null,
+        zipCode:  res.data.zipCode  || null,
+      } : prev);
     } catch {
       // sessiz kal
     }
@@ -131,7 +152,10 @@ export const AuthProvider = ({ children }) => {
       isAdmin, isSeller, isArtisan, isProvider, isConsumer, hasStore,
       isSuspended, suspensionReason,
       storeStatus, storeRejectionReason,
-      refreshAccountStatus: fetchAccountStatus
+      myStoreId,
+      isEmailVerified,
+      refreshAccountStatus: fetchAccountStatus,
+      refreshProfile
     }}>
       {children}
     </AuthContext.Provider>

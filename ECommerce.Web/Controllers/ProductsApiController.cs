@@ -26,6 +26,10 @@ namespace ECommerce.Web.Controllers
             [FromQuery] int? storeId,
             [FromQuery] LicenseType? licenseType,
             [FromQuery] string? search,
+            [FromQuery] int? categoryId,
+            [FromQuery] decimal? minPrice,
+            [FromQuery] decimal? maxPrice,
+            [FromQuery] string? sort = "newest",
             [FromQuery] bool includeInactive = false)
         {
             var callerType = User.FindFirst("UserType")?.Value;
@@ -44,17 +48,41 @@ namespace ECommerce.Web.Controllers
             if (licenseType.HasValue)
                 query = query.Where(p => p.LicenseType == licenseType);
 
+            if (categoryId.HasValue)
+                query = query.Where(p => p.CategoryId == categoryId);
+
+            if (minPrice.HasValue)
+                query = query.Where(p => p.Price >= minPrice.Value);
+
+            if (maxPrice.HasValue)
+                query = query.Where(p => p.Price <= maxPrice.Value);
+
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var s = search.ToLower();
-                query = query.Where(p =>
-                    p.Name.ToLower().Contains(s) ||
-                    p.Description.ToLower().Contains(s) ||
-                    (p.Keywords != null && p.Keywords.ToLower().Contains(s)));
+                // Her kelime için ayrı AND koşulu: "logo tasarım" → logo VE tasarım bir yerde geçmeli
+                var terms = search.ToLower()
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+                foreach (var term in terms)
+                {
+                    var t = term; // closure capture
+                    query = query.Where(p =>
+                        p.Name.ToLower().Contains(t) ||
+                        p.Description.ToLower().Contains(t) ||
+                        (p.Keywords != null && p.Keywords.ToLower().Contains(t)));
+                }
             }
 
-            var products = await query
-                .OrderByDescending(p => p.CreatedAt)
+            // Sıralama
+            IQueryable<Product> ordered = sort?.ToLower() switch
+            {
+                "price_asc"  => query.OrderBy(p => p.Price),
+                "price_desc" => query.OrderByDescending(p => p.Price),
+                "popular"    => query.OrderByDescending(p => p.DownloadCount),
+                _            => query.OrderByDescending(p => p.CreatedAt),
+            };
+
+            var products = await ordered
                 .Select(p => new {
                     p.Id, p.Name, p.Description, p.Price,
                     p.ImageUrl, p.PreviewUrl,
@@ -248,7 +276,7 @@ namespace ECommerce.Web.Controllers
             if (string.IsNullOrWhiteSpace(searchTerm))
                 return BadRequest(new { message = "Arama terimi boş olamaz." });
 
-            return await GetProducts(null, null, searchTerm);
+            return await GetProducts(null, null, searchTerm, null, null, null, "newest", false);
         }
 
         // ─── ADMIN: Ürün askıya al / aktifleştir ─────────────────────────

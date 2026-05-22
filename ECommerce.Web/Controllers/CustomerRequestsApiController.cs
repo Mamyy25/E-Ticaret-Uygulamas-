@@ -33,8 +33,9 @@ namespace ECommerce.Web.Controllers
                 {
                     r.Id, r.Title, r.Description, r.CategoryHint,
                     r.Budget, r.City, r.CreatedAt, r.ExpiresAt,
+                    CustomerId   = r.CustomerId,
                     CustomerName = r.Customer!.FullName,
-                    OfferCount = r.Offers.Count
+                    OfferCount   = r.Offers.Count
                 })
                 .ToListAsync();
 

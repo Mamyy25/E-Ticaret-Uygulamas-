@@ -1,53 +1,62 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
-  StyleSheet, ActivityIndicator, Alert, Platform
+  StyleSheet, ActivityIndicator, Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { colors } from '../theme/colors';
+import { fonts, fontSize, radius, space } from '../theme/typography';
+
+const SummaryRow = ({ label, value }) => (
+  <View style={styles.summaryRow}>
+    <Text style={styles.summaryLabel}>{label}</Text>
+    <Text style={styles.summaryValue}>{value}</Text>
+  </View>
+);
 
 const BookingScreen = ({ route, navigation }) => {
   const { storeId, packageId } = route.params || {};
 
-  const [step, setStep]               = useState(1);
-  const [profile, setProfile]         = useState(null);
+  const [step, setStep]             = useState(1);
+  const [profile, setProfile]       = useState(null);
   const [selectedPkg, setSelectedPkg] = useState(null);
-  const [date, setDate]               = useState('');  // YYYY-MM-DD
-  const [time, setTime]               = useState('');  // HH:MM
-  const [notes, setNotes]             = useState('');
-  const [submitting, setSubmitting]   = useState(false);
-  const [confirmed, setConfirmed]     = useState(null);
+  const [date, setDate]             = useState('');
+  const [time, setTime]             = useState('');
+  const [notes, setNotes]           = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [confirmed, setConfirmed]   = useState(null);
 
   useEffect(() => { fetchProfile(); }, [storeId]);
 
   useEffect(() => {
     if (packageId && profile?.servicePackages) {
-      const pkg = profile.servicePackages.find(p => p.id === packageId);
+      const pkg = profile.servicePackages.find((p) => p.id === packageId);
       if (pkg) { setSelectedPkg(pkg); setStep(2); }
     }
   }, [profile]);
 
   const fetchProfile = async () => {
     try {
-      const res = await axios.get(`/api/StoresApi/${storeId}/profile`);
-      setProfile(res.data);
-    } catch (e) {
+      const { data } = await axios.get(`/api/StoresApi/${storeId}/profile`);
+      setProfile(data);
+    } catch {
       Alert.alert('Hata', 'Profil yüklenemedi.');
     }
   };
 
   const handleConfirm = async () => {
-    if (!date || !time) { Alert.alert('Eksik bilgi', 'Tarih ve saat seçmelisin.'); return; }
+    if (!date || !time) { Alert.alert('Eksik bilgi', 'Tarih ve saat girmelisin.'); return; }
     setSubmitting(true);
     try {
       const appointmentDate = new Date(`${date}T${time}`);
-      const res = await axios.post('/api/AppointmentsApi', {
+      const { data } = await axios.post('/api/AppointmentsApi', {
         storeId: parseInt(storeId),
         servicePackageId: selectedPkg?.id || null,
         appointmentDate: appointmentDate.toISOString(),
         notes: notes || null,
       });
-      setConfirmed(res.data);
+      setConfirmed(data);
       setStep(4);
     } catch (e) {
       Alert.alert('Hata', e.response?.data?.message || 'Randevu oluşturulamadı.');
@@ -57,12 +66,17 @@ const BookingScreen = ({ route, navigation }) => {
   };
 
   if (!profile) {
-    return <View style={styles.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-      {/* Steps */}
+    <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
+
+      {/* Step indicator */}
       {step < 4 && (
         <View style={styles.steps}>
           {['Hizmet', 'Tarih', 'Onay'].map((label, i) => {
@@ -72,7 +86,10 @@ const BookingScreen = ({ route, navigation }) => {
             return (
               <View key={n} style={styles.stepItem}>
                 <View style={[styles.stepCircle, active && styles.stepActive, done && styles.stepDone]}>
-                  <Text style={[styles.stepNum, (active || done) && { color: 'white' }]}>{done ? '✓' : n}</Text>
+                  {done
+                    ? <Ionicons name="checkmark" size={14} color="#fff" />
+                    : <Text style={[styles.stepNum, (active || done) && { color: '#fff' }]}>{n}</Text>
+                  }
                 </View>
                 <Text style={[styles.stepLabel, active && styles.stepLabelActive]}>{label}</Text>
               </View>
@@ -81,80 +98,85 @@ const BookingScreen = ({ route, navigation }) => {
         </View>
       )}
 
-      {/* Adım 1: Hizmet */}
+      {/* ── Adım 1: Hizmet seç ── */}
       {step === 1 && (
         <View style={styles.card}>
-          <Text style={styles.h2}>Hizmet seç</Text>
+          <Text style={styles.h2}>Hizmet seçin</Text>
           <Text style={styles.sub}>{profile.name}</Text>
 
-          {profile.servicePackages?.length === 0 && (
-            <Text style={styles.empty}>Bu mağaza henüz hizmet eklemedi.</Text>
+          {!profile.servicePackages?.length && (
+            <Text style={styles.empty}>Bu mağazada henüz hizmet paketi yok.</Text>
           )}
 
-          {profile.servicePackages?.map(pkg => (
+          {profile.servicePackages?.map((pkg) => (
             <TouchableOpacity
               key={pkg.id}
-              onPress={() => { setSelectedPkg(pkg); setStep(2); }}
               style={[styles.pkgCard, selectedPkg?.id === pkg.id && styles.pkgCardActive]}
+              onPress={() => { setSelectedPkg(pkg); setStep(2); }}
+              activeOpacity={0.75}
             >
               <View style={{ flex: 1 }}>
                 <Text style={styles.pkgName}>{pkg.name}</Text>
-                <Text style={styles.pkgDesc} numberOfLines={2}>{pkg.description}</Text>
-                <Text style={styles.pkgMeta}>{pkg.durationMinutes} dk</Text>
+                {pkg.description ? (
+                  <Text style={styles.pkgDesc} numberOfLines={2}>{pkg.description}</Text>
+                ) : null}
+                <Text style={styles.pkgMeta}>
+                  <Ionicons name="time-outline" size={11} color={colors.textMuted} /> {pkg.durationMinutes} dk
+                </Text>
               </View>
-              <Text style={styles.pkgPrice}>{pkg.price.toLocaleString('tr-TR')}₺</Text>
+              <Text style={styles.pkgPrice}>{pkg.price?.toLocaleString('tr-TR')}₺</Text>
             </TouchableOpacity>
           ))}
         </View>
       )}
 
-      {/* Adım 2: Tarih + saat */}
+      {/* ── Adım 2: Tarih + saat ── */}
       {step === 2 && (
         <View style={styles.card}>
           <Text style={styles.h2}>Tarih ve saat</Text>
           <Text style={styles.sub}>{selectedPkg?.name} · {selectedPkg?.durationMinutes} dk</Text>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Tarih (YYYY-AA-GG)</Text>
+            <Text style={styles.fieldLabel}>Tarih</Text>
             <TextInput
               style={styles.input}
               value={date}
               onChangeText={setDate}
-              placeholder="2026-05-15"
+              placeholder="YYYY-AA-GG  (örn: 2026-06-15)"
               placeholderTextColor={colors.textMuted}
             />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Saat (SS:DD)</Text>
+            <Text style={styles.fieldLabel}>Saat</Text>
             <TextInput
               style={styles.input}
               value={time}
               onChangeText={setTime}
-              placeholder="14:30"
+              placeholder="SS:DD  (örn: 14:30)"
               placeholderTextColor={colors.textMuted}
             />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Not (opsiyonel)</Text>
+            <Text style={styles.fieldLabel}>Not (opsiyonel)</Text>
             <TextInput
-              style={[styles.input, { height: 80 }]}
+              style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
               value={notes}
               onChangeText={setNotes}
               multiline
-              placeholder="Özel istek veya bilgi..."
+              placeholder="Özel istek veya not..."
               placeholderTextColor={colors.textMuted}
             />
           </View>
 
           <View style={styles.actions}>
-            <TouchableOpacity onPress={() => setStep(1)} style={styles.btnGhost}>
-              <Text style={styles.btnGhostText}>← Geri</Text>
+            <TouchableOpacity style={styles.btnGhost} onPress={() => setStep(1)}>
+              <Text style={styles.btnGhostText}>Geri</Text>
             </TouchableOpacity>
             <TouchableOpacity
+              style={[styles.btnPrimary, (!date || !time) && styles.btnDisabled]}
               onPress={() => setStep(3)}
-              style={[styles.btnPrimary, (!date || !time) && { opacity: 0.5 }]}
               disabled={!date || !time}
             >
               <Text style={styles.btnPrimaryText}>Devam</Text>
@@ -163,30 +185,30 @@ const BookingScreen = ({ route, navigation }) => {
         </View>
       )}
 
-      {/* Adım 3: Onay */}
+      {/* ── Adım 3: Onay ── */}
       {step === 3 && (
         <View style={styles.card}>
           <Text style={styles.h2}>Onayla</Text>
-          <Text style={styles.sub}>Bilgileri kontrol et.</Text>
+          <Text style={styles.sub}>Bilgileri kontrol edin.</Text>
 
-          <View style={styles.summary}>
-            <SummaryRow label="Mağaza"  value={profile.name} />
-            <SummaryRow label="Hizmet"  value={selectedPkg?.name} />
-            <SummaryRow label="Tarih"   value={new Date(`${date}T${time}`).toLocaleString('tr-TR')} />
-            <SummaryRow label="Süre"    value={`${selectedPkg?.durationMinutes} dk`} />
+          <View style={styles.summaryBox}>
+            <SummaryRow label="Mağaza"   value={profile.name} />
+            <SummaryRow label="Hizmet"   value={selectedPkg?.name} />
+            <SummaryRow label="Tarih"    value={new Date(`${date}T${time}`).toLocaleString('tr-TR')} />
+            <SummaryRow label="Süre"     value={`${selectedPkg?.durationMinutes} dk`} />
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Toplam</Text>
-              <Text style={styles.totalValue}>{selectedPkg?.price.toLocaleString('tr-TR')}₺</Text>
+              <Text style={styles.totalValue}>{selectedPkg?.price?.toLocaleString('tr-TR')}₺</Text>
             </View>
           </View>
 
           <View style={styles.actions}>
-            <TouchableOpacity onPress={() => setStep(2)} style={styles.btnGhost} disabled={submitting}>
-              <Text style={styles.btnGhostText}>← Geri</Text>
+            <TouchableOpacity style={styles.btnGhost} onPress={() => setStep(2)} disabled={submitting}>
+              <Text style={styles.btnGhostText}>Geri</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleConfirm} style={styles.btnPrimary} disabled={submitting}>
+            <TouchableOpacity style={styles.btnPrimary} onPress={handleConfirm} disabled={submitting}>
               {submitting
-                ? <ActivityIndicator color="white" />
+                ? <ActivityIndicator color="#fff" />
                 : <Text style={styles.btnPrimaryText}>Oluştur</Text>
               }
             </TouchableOpacity>
@@ -194,24 +216,32 @@ const BookingScreen = ({ route, navigation }) => {
         </View>
       )}
 
-      {/* Adım 4: Onaylandı */}
+      {/* ── Adım 4: Onaylandı ── */}
       {step === 4 && confirmed && (
         <View style={[styles.card, { alignItems: 'center' }]}>
-          <View style={styles.successCircle}><Text style={styles.successIcon}>✓</Text></View>
-          <Text style={styles.h2}>Randevu oluşturuldu</Text>
-          <Text style={styles.sub}>{profile.name} sana en kısa sürede dönecek.</Text>
+          <View style={styles.successCircle}>
+            <Ionicons name="checkmark-circle" size={40} color={colors.success} />
+          </View>
+          <Text style={styles.h2}>Randevu oluşturuldu!</Text>
+          <Text style={styles.sub}>{profile.name} en kısa sürede size dönecek.</Text>
 
-          <View style={[styles.summary, { alignSelf: 'stretch', marginTop: 16 }]}>
+          <View style={[styles.summaryBox, { alignSelf: 'stretch', marginTop: space[4] }]}>
             <SummaryRow label="Hizmet" value={selectedPkg?.name} />
             <SummaryRow label="Tarih"  value={new Date(confirmed.appointmentDate).toLocaleString('tr-TR')} />
-            <SummaryRow label="Durum"  value={confirmed.status} />
+            <SummaryRow label="Durum"  value={confirmed.status || 'Beklemede'} />
           </View>
 
-          <View style={[styles.actions, { alignSelf: 'stretch' }]}>
-            <TouchableOpacity onPress={() => navigation.navigate('OrdersTab')} style={styles.btnGhost}>
+          <View style={[styles.actions, { alignSelf: 'stretch', marginTop: space[4] }]}>
+            <TouchableOpacity
+              style={styles.btnGhost}
+              onPress={() => navigation.navigate('Profil', { screen: 'MyAppointments' })}
+            >
               <Text style={styles.btnGhostText}>Randevularım</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Discover')} style={styles.btnPrimary}>
+            <TouchableOpacity
+              style={styles.btnPrimary}
+              onPress={() => navigation.navigate('Kesfet')}
+            >
               <Text style={styles.btnPrimaryText}>Keşfet</Text>
             </TouchableOpacity>
           </View>
@@ -221,69 +251,93 @@ const BookingScreen = ({ route, navigation }) => {
   );
 };
 
-const SummaryRow = ({ label, value }) => (
-  <View style={styles.row}>
-    <Text style={styles.rowLabel}>{label}</Text>
-    <Text style={styles.rowValue}>{value}</Text>
-  </View>
-);
+export default BookingScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.canvas },
-  center:    { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.canvas },
+  scroll:    { padding: space[4], paddingBottom: 48 },
+  center:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.canvas },
 
-  steps: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-  stepItem: { alignItems: 'center', flex: 1, gap: 6 },
-  stepCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.borderSubtle, alignItems: 'center', justifyContent: 'center' },
+  // Step bar
+  steps: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: space[5] },
+  stepItem:  { alignItems: 'center', flex: 1, gap: 6 },
+  stepCircle: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1, borderColor: colors.borderSubtle,
+    alignItems: 'center', justifyContent: 'center',
+  },
   stepActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   stepDone:   { backgroundColor: colors.success, borderColor: colors.success },
-  stepNum:    { fontSize: 13, fontWeight: '700', color: colors.textMuted },
-  stepLabel:  { fontSize: 11, color: colors.textMuted },
-  stepLabelActive: { color: colors.text, fontWeight: '700' },
+  stepNum:    { fontFamily: fonts.bodyBold, fontSize: fontSize.sm, color: colors.textMuted },
+  stepLabel:  { fontFamily: fonts.body, fontSize: fontSize.xs, color: colors.textMuted },
+  stepLabelActive: { fontFamily: fonts.bodyBold, color: colors.text },
 
-  card: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.borderSubtle, borderRadius: 16, padding: 20 },
-  h2:   { fontSize: 20, fontWeight: '700', color: colors.text },
-  sub:  { fontSize: 13, color: colors.textSecondary, marginTop: 4, marginBottom: 20 },
+  // Card
+  card: {
+    backgroundColor: colors.surface,
+    borderWidth: 1, borderColor: colors.borderSubtle,
+    borderRadius: radius.xl, padding: space[5],
+  },
+  h2:  { fontFamily: fonts.displayBold, fontSize: fontSize.lg, color: colors.text },
+  sub: { fontFamily: fonts.body, fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 4, marginBottom: space[5] },
 
+  // Package cards
   pkgCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: colors.surfaceRaised,
     borderWidth: 1.5, borderColor: colors.borderSubtle,
-    borderRadius: 12, padding: 14, marginBottom: 10,
+    borderRadius: radius.lg, padding: space[4], marginBottom: space[2] + 2,
   },
   pkgCardActive: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-  pkgName:  { fontSize: 14, fontWeight: '700', color: colors.text },
-  pkgDesc:  { fontSize: 12, color: colors.textSecondary, marginTop: 4, lineHeight: 16 },
-  pkgMeta:  { fontSize: 11, color: colors.textMuted, marginTop: 6 },
-  pkgPrice: { fontSize: 15, fontWeight: '700', color: colors.text },
+  pkgName:  { fontFamily: fonts.bodySemiBold, fontSize: fontSize.base, color: colors.text },
+  pkgDesc:  { fontFamily: fonts.body, fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 3, lineHeight: 18 },
+  pkgMeta:  { fontFamily: fonts.body, fontSize: fontSize.xs, color: colors.textMuted, marginTop: 5 },
+  pkgPrice: { fontFamily: fonts.displayBold, fontSize: fontSize.md, color: colors.primary },
 
-  field: { marginBottom: 16 },
-  label: { fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 },
+  // Form
+  field:      { marginBottom: space[4] },
+  fieldLabel: { fontFamily: fonts.bodySemiBold, fontSize: fontSize.xs, color: colors.textSecondary, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
   input: {
     backgroundColor: colors.surfaceSunken,
     borderWidth: 1, borderColor: colors.border,
-    borderRadius: 8, paddingHorizontal: 14, paddingVertical: 12,
-    color: colors.text, fontSize: 14,
+    borderRadius: radius.md, paddingHorizontal: space[4], paddingVertical: space[3],
+    fontFamily: fonts.body, fontSize: fontSize.base, color: colors.text,
   },
 
-  actions: { flexDirection: 'row', gap: 10, marginTop: 16 },
-  btnGhost: { flex: 1, borderWidth: 1, borderColor: colors.border, paddingVertical: 13, borderRadius: 8, alignItems: 'center' },
-  btnGhostText: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
-  btnPrimary: { flex: 2, backgroundColor: colors.primary, paddingVertical: 13, borderRadius: 8, alignItems: 'center' },
-  btnPrimaryText: { color: 'white', fontSize: 14, fontWeight: '700' },
+  // Summary
+  summaryBox: { gap: 10 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  summaryLabel: { fontFamily: fonts.body, fontSize: fontSize.sm, color: colors.textSecondary },
+  summaryValue: { fontFamily: fonts.bodySemiBold, fontSize: fontSize.sm, color: colors.text, flex: 1, textAlign: 'right' },
+  totalRow: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    paddingTop: space[3], marginTop: space[1],
+    borderTopWidth: 1, borderTopColor: colors.borderSubtle,
+  },
+  totalLabel: { fontFamily: fonts.bodyBold, fontSize: fontSize.base, color: colors.text },
+  totalValue: { fontFamily: fonts.display, fontSize: fontSize.md, color: colors.primary },
 
-  summary: { gap: 10 },
-  row:     { flexDirection: 'row', justifyContent: 'space-between' },
-  rowLabel: { color: colors.textSecondary, fontSize: 13 },
-  rowValue: { color: colors.text, fontSize: 13, fontWeight: '600', flex: 1, textAlign: 'right' },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 12, marginTop: 4, borderTopWidth: 1, borderTopColor: colors.borderSubtle },
-  totalLabel: { fontSize: 15, fontWeight: '700', color: colors.text },
-  totalValue: { fontSize: 18, fontWeight: '700', color: colors.accent },
+  // Buttons
+  actions:      { flexDirection: 'row', gap: 10, marginTop: space[4] },
+  btnGhost: {
+    flex: 1, borderWidth: 1, borderColor: colors.border,
+    paddingVertical: 13, borderRadius: radius.md, alignItems: 'center',
+  },
+  btnGhostText: { fontFamily: fonts.bodyBold, fontSize: fontSize.sm, color: colors.textSecondary },
+  btnPrimary: {
+    flex: 2, backgroundColor: colors.primary,
+    paddingVertical: 13, borderRadius: radius.md, alignItems: 'center',
+  },
+  btnPrimaryText: { fontFamily: fonts.bodyBold, fontSize: fontSize.sm, color: '#fff' },
+  btnDisabled:    { opacity: 0.45 },
 
-  successCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.successSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  successIcon:   { fontSize: 32, color: colors.success, fontWeight: '700' },
+  // Success
+  successCircle: {
+    width: 72, height: 72, borderRadius: 36,
+    backgroundColor: colors.successSoft,
+    alignItems: 'center', justifyContent: 'center', marginBottom: space[3],
+  },
 
-  empty: { color: colors.textMuted, fontSize: 14, textAlign: 'center', padding: 20 },
+  empty: { fontFamily: fonts.body, fontSize: fontSize.sm, color: colors.textMuted, textAlign: 'center', padding: space[5] },
 });
-
-export default BookingScreen;

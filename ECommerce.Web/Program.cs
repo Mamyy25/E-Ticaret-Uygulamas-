@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Text.Json.Serialization;
 using ECommerce.Data;
+using ECommerce.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,9 @@ builder.Services.AddControllers()
 // DB
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Email
+builder.Services.AddScoped<IEmailService, GmailEmailService>();
 
 
 // (Removed Session configurations for Web API)

@@ -55,7 +55,9 @@ namespace ECommerce.Web.Controllers
             [FromQuery] string? storeType,
             [FromQuery] string? search,
             [FromQuery] string? city,
-            [FromQuery] string? sort = "rating")
+            [FromQuery] string? sort = "rating",
+            [FromQuery] decimal? minPrice = null,
+            [FromQuery] decimal? maxPrice = null)
         {
             var query = _context.Stores
                 .Where(s => s.IsActive)
@@ -68,19 +70,33 @@ namespace ECommerce.Web.Controllers
                 query = query.Where(s => s.StoreType == st);
             }
 
-            // Arama (mağaza adı veya açıklama)
+            // Arama: mağaza adı, açıklama ve hizmet etiketleri — çok kelimeli AND mantığı
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(s =>
-                    s.Name.Contains(search) ||
-                    (s.Description != null && s.Description.Contains(search)));
+                var terms = search.ToLower()
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+                foreach (var term in terms)
+                {
+                    var t = term; // closure capture
+                    query = query.Where(s =>
+                        s.Name.ToLower().Contains(t) ||
+                        (s.Description != null && s.Description.ToLower().Contains(t)) ||
+                        s.ServicePackages.Any(sp => sp.IsActive && sp.Tags != null && sp.Tags.ToLower().Contains(t)));
+                }
             }
 
-            // Şehir filtresi (Seller'ın şehrine göre)
+            // Şehir filtresi
             if (!string.IsNullOrEmpty(city))
             {
                 query = query.Where(s => s.Seller != null && s.Seller.City == city);
             }
+
+            // Fiyat aralığı (en düşük hizmet fiyatına göre)
+            if (minPrice.HasValue)
+                query = query.Where(s => s.ServicePackages.Any(sp => sp.IsActive && sp.Price >= minPrice.Value));
+            if (maxPrice.HasValue)
+                query = query.Where(s => s.ServicePackages.Any(sp => sp.IsActive && sp.Price <= maxPrice.Value));
 
             var rawStores = await query.Select(s => new
             {
